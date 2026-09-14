@@ -1,0 +1,58 @@
+{
+  "expo": {
+    "name": "Prisma",
+    "slug": "prisma-puzzle",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "prisma",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "primaryColor": "#4D9BFF",
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "bundleIdentifier": "com.prismapuzzle.app",
+      "buildNumber": "1",
+      "supportsTablet": true,
+      "requireFullScreen": true,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleDisplayName": "Prisma",
+        "UIViewControllerBasedStatusBarAppearance": true
+      }
+    },
+    "android": {
+      "package": "com.prismapuzzle.app",
+      "versionCode": 1,
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "adaptiveIcon": {
+        "backgroundColor": "#0A0D14",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "name": "Prisma",
+      "themeColor": "#0A0D14",
+      "backgroundColor": "#0A0D14"
+    },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 180,
+          "resizeMode": "contain",
+          "backgroundColor": "#0A0D14",
+          "dark": {
+            "backgroundColor": "#0A0D14"
+          }
+        }
+      ]
+    ]
+  }
+}
