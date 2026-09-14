@@ -9,6 +9,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View, useColorScheme } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import {
+  Outfit_400Regular,
+  Outfit_500Medium,
+  Outfit_600SemiBold,
+  Outfit_700Bold,
+  Outfit_800ExtraBold,
+  useFonts,
+} from '@expo-google-fonts/outfit';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { createGame } from './src/game/engine';
 import { GameState, Mode } from './src/game/types';
@@ -39,6 +47,13 @@ type SheetName = 'stats' | 'settings' | 'howto' | null;
 
 export default function App() {
   const systemTheme = useColorScheme();
+  const [schriftBereit] = useFonts({
+    Outfit_400Regular,
+    Outfit_500Medium,
+    Outfit_600SemiBold,
+    Outfit_700Bold,
+    Outfit_800ExtraBold,
+  });
   const [bereit, setBereit] = useState(false);
   const [screen, setScreen] = useState<Screen>({ name: 'home' });
   const [sheet, setSheet] = useState<SheetName>(null);
@@ -109,9 +124,10 @@ export default function App() {
     setScreen({ name: 'home' });
   }, []);
 
-  if (!bereit) {
-    // Kurzer, ruhiger Startbildschirm statt eines Ladebalkens — die Daten
-    // sind in aller Regel in wenigen Millisekunden da.
+  if (!bereit || !schriftBereit) {
+    // Kurzer, ruhiger Startbildschirm statt eines Ladebalkens — Daten und
+    // Schriften sind in aller Regel in wenigen Millisekunden da. Erst danach
+    // zeichnen, sonst springt das Layout beim Schriftwechsel sichtbar um.
     return <View style={[styles.root, { backgroundColor: DARK.bg }]} />;
   }
 
@@ -123,6 +139,7 @@ export default function App() {
         {screen.name === 'home' ? (
           <HomeScreen
             palette={palette}
+            dark={dunkel}
             stats={stats}
             heuteGespielt={dailyDone(stats)}
             hatGespeichertesSpiel={gespeichert !== null}
@@ -140,6 +157,7 @@ export default function App() {
             key={`${screen.mode}-${screen.fortsetzen?.seed ?? 'neu'}-${ergebnis ? 'e' : 'l'}`}
             mode={screen.mode}
             palette={palette}
+            dark={dunkel}
             settings={settings}
             initialGame={screen.fortsetzen ?? null}
             onExit={zurueckZumMenue}

@@ -13,7 +13,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { tapButton } from '../haptics';
-import { Palette, RADIUS, SPACING } from '../theme';
+import { FONT, Palette, RADIUS, SPACING } from '../theme';
 
 export interface ButtonProps {
   label: string;
@@ -123,6 +123,6 @@ const styles = StyleSheet.create({
     minHeight: 52,
   },
   labels: { flexShrink: 1 },
-  label: { fontSize: 17, fontWeight: '600', letterSpacing: 0.1 },
-  sublabel: { fontSize: 13, marginTop: 2, fontWeight: '500' },
+  label: { fontSize: 17, fontFamily: FONT.semiBold, letterSpacing: 0.1 },
+  sublabel: { fontSize: 13, marginTop: 2, fontFamily: FONT.medium },
 });

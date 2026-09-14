@@ -19,7 +19,7 @@ import { GameState } from '../../game/types';
 import { numberLocale, strings } from '../../i18n/strings';
 import { Stats } from '../../storage/store';
 import * as haptics from '../haptics';
-import { Palette, RADIUS, SPACING } from '../theme';
+import { FONT, Palette, RADIUS, SPACING, TABULAR } from '../theme';
 import { Button } from '../components/Button';
 
 export interface ResultSheetProps {
@@ -197,16 +197,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     alignItems: 'center',
   },
-  kicker: { fontSize: 13, fontWeight: '600', letterSpacing: 0.6 },
-  score: { fontSize: 56, fontWeight: '800', letterSpacing: -1.5, marginTop: SPACING.xs },
+  kicker: { fontSize: 13, fontFamily: FONT.semiBold, letterSpacing: 0.6 },
+  score: { fontSize: 56, fontFamily: FONT.extraBold, letterSpacing: -1.5, marginTop: SPACING.xs, ...TABULAR },
   record: {
     paddingHorizontal: SPACING.md,
     paddingVertical: 5,
     borderRadius: RADIUS.pill,
     marginTop: SPACING.xs,
   },
-  recordText: { color: '#FFFFFF', fontWeight: '700', fontSize: 13, letterSpacing: 0.4 },
-  previousBest: { fontSize: 13, fontWeight: '600', marginTop: SPACING.xs },
+  recordText: { color: '#FFFFFF', fontFamily: FONT.bold, fontSize: 13, letterSpacing: 0.4 },
+  previousBest: { fontSize: 13, fontFamily: FONT.semiBold, marginTop: SPACING.xs },
   gridBox: {
     marginTop: SPACING.md,
     paddingVertical: SPACING.sm + 2,
@@ -221,9 +221,9 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
   },
   kennzahl: { alignItems: 'center' },
-  kennzahlValue: { fontSize: 20, fontWeight: '700' },
-  kennzahlLabel: { fontSize: 11, fontWeight: '600', letterSpacing: 0.4, marginTop: 1 },
-  countdown: { fontSize: 13, fontWeight: '600', marginTop: SPACING.md },
+  kennzahlValue: { fontSize: 20, fontFamily: FONT.bold },
+  kennzahlLabel: { fontSize: 11, fontFamily: FONT.semiBold, letterSpacing: 0.4, marginTop: 1 },
+  countdown: { fontSize: 13, fontFamily: FONT.semiBold, marginTop: SPACING.md },
   actions: { width: '100%', marginTop: SPACING.lg, gap: SPACING.sm },
   actionRow: { flexDirection: 'row', gap: SPACING.sm },
   flex: { flex: 1 },

@@ -6,6 +6,7 @@
  */
 import React from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { dateKey } from '../../game/daily';
@@ -14,7 +15,7 @@ import { Level } from '../../game/types';
 import { numberLocale, strings } from '../../i18n/strings';
 import { Settings, Stats, ThemeChoice } from '../../storage/store';
 import * as haptics from '../haptics';
-import { Palette, RADIUS, SPACING, STONES } from '../theme';
+import { FONT, Palette, RADIUS, SPACING, STONES } from '../theme';
 import { Button } from '../components/Button';
 import { Stone } from '../components/Stone';
 
@@ -285,9 +286,14 @@ export function HowToSheet({
             ) : (
               <>
                 <Text style={[styles.pfeil, { color: palette.textFaint }]}>›</Text>
-                <View style={[styles.prismaChip, { borderColor: palette.border }]}>
+                <LinearGradient
+                  colors={['#FFFFFF', '#CDE7FF', '#9FD0FF']}
+                  start={{ x: 0.2, y: 0 }}
+                  end={{ x: 0.8, y: 1 }}
+                  style={styles.prismaChip}
+                >
                   <Text style={styles.prismaChipText}>◈</Text>
-                </View>
+                </LinearGradient>
               </>
             )}
           </React.Fragment>
@@ -329,16 +335,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: SPACING.md,
   },
-  sheetTitle: { fontSize: 22, fontWeight: '700' },
-  close: { fontSize: 19, fontWeight: '600' },
+  sheetTitle: { fontSize: 22, fontFamily: FONT.bold },
+  close: { fontSize: 19, fontFamily: FONT.semiBold },
   empty: { fontSize: 15, lineHeight: 22, paddingVertical: SPACING.lg, textAlign: 'center' },
   kachelReihe: { flexDirection: 'row', gap: SPACING.sm, marginBottom: SPACING.sm },
   kachel: { flex: 1, borderRadius: RADIUS.md, paddingVertical: SPACING.md, alignItems: 'center' },
-  kachelValue: { fontSize: 21, fontWeight: '700' },
-  kachelLabel: { fontSize: 11, fontWeight: '600', marginTop: 2, letterSpacing: 0.3 },
+  kachelValue: { fontSize: 21, fontFamily: FONT.bold },
+  kachelLabel: { fontSize: 11, fontFamily: FONT.semiBold, marginTop: 2, letterSpacing: 0.3 },
   abschnitt: {
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: FONT.bold,
     letterSpacing: 0.8,
     textTransform: 'uppercase',
     marginTop: SPACING.lg,
@@ -354,7 +360,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
   },
-  segmentText: { fontSize: 14, fontWeight: '600' },
+  segmentText: { fontSize: 14, fontFamily: FONT.semiBold },
   zeile: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -364,7 +370,7 @@ const styles = StyleSheet.create({
     gap: SPACING.md,
   },
   zeileText: { flexShrink: 1 },
-  zeileLabel: { fontSize: 16, fontWeight: '600' },
+  zeileLabel: { fontSize: 16, fontFamily: FONT.semiBold },
   zeileHint: { fontSize: 12, marginTop: 2, lineHeight: 16 },
   vorschau: {
     flexDirection: 'row',
@@ -381,17 +387,22 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.md,
     flexWrap: 'wrap',
   },
-  pfeil: { fontSize: 18, fontWeight: '700', marginHorizontal: 1 },
+  pfeil: { fontSize: 18, fontFamily: FONT.bold, marginHorizontal: 1 },
+  /* Das Prisma ist das Ziel des Spiels und muss im Spektrum auch danach
+     aussehen — als das, worauf die Reihe zuläuft, nicht als leeres Kästchen. */
   prismaChip: {
-    width: 34,
-    height: 34,
+    width: 36,
+    height: 36,
     borderRadius: 10,
-    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    shadowColor: '#9FD0FF',
+    shadowOpacity: 0.85,
+    shadowRadius: 11,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 6,
   },
-  prismaChipText: { fontSize: 16, color: '#1A2030' },
+  prismaChipText: { fontSize: 17, color: '#12457F' },
   regel: { flexDirection: 'row', gap: SPACING.md, marginBottom: SPACING.md, alignItems: 'flex-start' },
   regelNummer: {
     width: 26,
@@ -400,7 +411,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  regelNummerText: { fontSize: 13, fontWeight: '700' },
+  regelNummerText: { fontSize: 13, fontFamily: FONT.bold },
   regelText: { flex: 1, fontSize: 15, lineHeight: 22 },
   abschluss: { paddingTop: SPACING.sm, paddingBottom: SPACING.md },
 });

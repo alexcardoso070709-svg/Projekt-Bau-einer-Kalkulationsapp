@@ -30,8 +30,9 @@ import { COLS, GameState, Level, Mode, Position, ROWS } from '../../game/types';
 import { strings } from '../../i18n/strings';
 import { Settings } from '../../storage/store';
 import * as haptics from '../haptics';
-import { Palette, RADIUS, SPACING, STONES, TIMING } from '../theme';
-import { FallingStone, GameBoard } from '../components/Board';
+import { FONT, Palette, RADIUS, SPACING, STONES, TABULAR, TIMING } from '../theme';
+import { Backdrop } from '../components/Backdrop';
+import { BurstEffect, FallingStone, FloatEffect, GameBoard } from '../components/Board';
 import { Counter } from '../components/Counter';
 import { Stone } from '../components/Stone';
 
@@ -40,6 +41,8 @@ const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 export interface GameScreenProps {
   mode: Mode;
   palette: Palette;
+  /** Steuert, wie kräftig die Lichtkegel im Hintergrund auftragen dürfen. */
+  dark: boolean;
   settings: Settings;
   initialGame?: GameState | null;
   onExit: () => void;
@@ -51,6 +54,7 @@ export interface GameScreenProps {
 export function GameScreen({
   mode,
   palette,
+  dark,
   settings,
   initialGame,
   onExit,
@@ -68,6 +72,8 @@ export function GameScreen({
   const [shownScore, setShownScore] = useState(game.score);
   const [falling, setFalling] = useState<FallingStone | null>(null);
   const [flashes, setFlashes] = useState<Position[]>([]);
+  const [bursts, setBursts] = useState<BurstEffect[]>([]);
+  const [floats, setFloats] = useState<FloatEffect[]>([]);
   const [chainBadge, setChainBadge] = useState<number | null>(null);
   const [hintColumn, setHintColumn] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
@@ -89,6 +95,31 @@ export function GameScreen({
     opacity: badgeScale.value,
     transform: [{ scale: 0.7 + badgeScale.value * 0.3 }],
   }));
+
+  // Erschütterung und Lichtblitz sind allein dem Prisma vorbehalten. Würde
+  // jede Verschmelzung den Bildschirm bewegen, wäre nach zehn Zügen niemand
+  // mehr beeindruckt — und das Spiel schwer zu lesen.
+  const shake = useSharedValue(0);
+  const shakeStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: shake.value }],
+  }));
+
+  const flash = useSharedValue(0);
+  const flashStyle = useAnimatedStyle(() => ({ opacity: flash.value }));
+
+  const erschuettern = useCallback(() => {
+    shake.value = withSequence(
+      withTiming(-7, { duration: 42 }),
+      withTiming(7, { duration: 58 }),
+      withTiming(-4, { duration: 52 }),
+      withTiming(2, { duration: 48 }),
+      withTiming(0, { duration: 56 }),
+    );
+    flash.value = withSequence(
+      withTiming(0.4, { duration: 55 }),
+      withTiming(0, { duration: 320 }),
+    );
+  }, [shake, flash]);
 
   // Zellengröße aus dem verfügbaren Platz: Das Feld soll auf einem kleinen
   // Telefon genauso vollständig sichtbar sein wie auf einem Tablet.
@@ -149,9 +180,39 @@ export function GameScreen({
         await sleep(TIMING.mergeCollapse);
         if (!alive.current) return;
 
-        const prismaHier = step.groups.some((g) => g.resultLevel === null);
+        const prismaGruppen = step.groups.filter((g) => g.resultLevel === null);
+        const prismaHier = prismaGruppen.length > 0;
+        const marke = `${nonce.current}-${step.chain}`;
+
+        // Funken aus jeder verschmelzenden Zelle, in der Farbe, die dort
+        // gerade verschwindet.
+        setBursts(
+          step.groups.flatMap((g, gi) =>
+            g.cells.map((cell, ci) => ({
+              id: `${marke}-${gi}-${ci}`,
+              row: cell.row,
+              col: cell.col,
+              colour: STONES[g.level].glow,
+            })),
+          ),
+        );
+
+        // Die Punktzahl steigt dort auf, wo der neue Stein entsteht.
+        const leit = step.groups[0];
+        setFloats([
+          {
+            id: marke,
+            row: leit.anchor.row,
+            col: leit.anchor.col,
+            value: step.points,
+            colour: prismaHier ? '#2B7FFF' : STONES[leit.level].shade,
+            chain: step.chain,
+          },
+        ]);
+
         if (prismaHier) {
-          setFlashes(step.groups.filter((g) => g.resultLevel === null).map((g) => g.anchor));
+          setFlashes(prismaGruppen.map((g) => g.anchor));
+          erschuettern();
           if (settings.haptics) haptics.tapPrisma();
         } else if (settings.haptics) {
           haptics.tapMerge(step.chain);
@@ -162,10 +223,18 @@ export function GameScreen({
         setShownScore(punkte);
         if (step.chain >= 2) zeigeKette(step.chain);
 
-        await sleep(prismaHier ? TIMING.prismaFlash * 0.6 : TIMING.chainGap);
+        await sleep(prismaHier ? TIMING.prismaFlash * 0.7 : TIMING.chainGap);
         if (!alive.current) return;
         setFlashes([]);
       }
+
+      // Funken und Zahlen erst nach ihrer Laufzeit entfernen, damit sie nicht
+      // mitten in der Animation verschwinden.
+      setTimeout(() => {
+        if (!alive.current) return;
+        setBursts([]);
+        setFloats([]);
+      }, 800);
 
       // 4. Zustand übernehmen.
       setDisplay(nextState.board);
@@ -216,7 +285,10 @@ export function GameScreen({
         : strings.zen;
 
   return (
-    <View style={[styles.root, { backgroundColor: palette.bg, paddingTop: insets.top }]}>
+    <View style={[styles.root, { backgroundColor: palette.bg }]}>
+      <Backdrop palette={palette} dark={dark} intensity={0.75} />
+
+      <Animated.View style={[styles.root, { paddingTop: insets.top }, shakeStyle]}>
       {/* Kopfzeile */}
       <View style={styles.header}>
         <Pressable
@@ -297,6 +369,8 @@ export function GameScreen({
           disabled={busy || game.over}
           falling={falling}
           flashes={flashes}
+          bursts={bursts}
+          floats={floats}
           highlightColumn={hintColumn}
         />
       </View>
@@ -328,6 +402,14 @@ export function GameScreen({
           </View>
         )}
       </View>
+      </Animated.View>
+
+      {/* Lichtblitz einer Prisma-Explosion — liegt über allem, blockiert aber
+          keine Eingaben, damit der nächste Zug nicht verzögert wird. */}
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.flashOverlay, flashStyle]}
+      />
     </View>
   );
 }
@@ -382,6 +464,14 @@ function Stat({
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
+  flashOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#FFFFFF',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -389,13 +479,13 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.sm,
   },
   headerButton: { width: 64, alignItems: 'center', justifyContent: 'center' },
-  headerIcon: { fontSize: 34, fontWeight: '300', marginTop: -4 },
+  headerIcon: { fontSize: 34, fontFamily: FONT.regular, marginTop: -4 },
   headerCentre: { flex: 1, alignItems: 'center' },
-  headerTitle: { fontSize: 13, fontWeight: '600', letterSpacing: 0.6 },
-  score: { fontSize: 38, fontWeight: '700', letterSpacing: -0.5, marginTop: 2 },
+  headerTitle: { fontSize: 13, fontFamily: FONT.semiBold, letterSpacing: 0.6 },
+  score: { fontSize: 38, fontFamily: FONT.bold, letterSpacing: -0.5, marginTop: 2, ...TABULAR },
   movesBox: { alignItems: 'center' },
-  movesValue: { fontSize: 20, fontWeight: '700' },
-  movesLabel: { fontSize: 10, fontWeight: '600', letterSpacing: 0.4 },
+  movesValue: { fontSize: 20, fontFamily: FONT.bold, ...TABULAR },
+  movesLabel: { fontSize: 10, fontFamily: FONT.semiBold, letterSpacing: 0.4 },
   queue: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -417,7 +507,7 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.xs + 2,
     borderRadius: RADIUS.pill,
   },
-  chainText: { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
+  chainText: { color: '#FFFFFF', fontFamily: FONT.bold, fontSize: 14 },
   boardWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   footer: {
     flexDirection: 'row',
@@ -433,9 +523,9 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.pill,
     borderWidth: 1,
   },
-  footerLabel: { fontSize: 15, fontWeight: '600' },
+  footerLabel: { fontSize: 15, fontFamily: FONT.semiBold },
   stats: { flexDirection: 'row', gap: SPACING.xl },
   stat: { alignItems: 'center' },
-  statValue: { fontSize: 18, fontWeight: '700' },
-  statLabel: { fontSize: 11, fontWeight: '600', letterSpacing: 0.4, marginTop: 1 },
+  statValue: { fontSize: 18, fontFamily: FONT.bold },
+  statLabel: { fontSize: 11, fontFamily: FONT.semiBold, letterSpacing: 0.4, marginTop: 1 },
 });

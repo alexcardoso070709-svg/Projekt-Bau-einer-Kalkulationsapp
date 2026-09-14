@@ -5,9 +5,19 @@
  * hervorgehobene Fläche: Es ist der Modus, der wiederkehrende Besuche
  * erzeugt. Endlos und Zen sind für alle da, die heute mehr wollen.
  */
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, {
+  Easing,
+  FadeInDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { puzzleNumber } from '../../game/daily';
 import { Level, Mode } from '../../game/types';
@@ -15,12 +25,57 @@ import { numberLocale, strings } from '../../i18n/strings';
 import { DailyResult, Stats } from '../../storage/store';
 import { formatNumber } from '../../game/share';
 import * as haptics from '../haptics';
-import { Palette, RADIUS, SPACING, STONES } from '../theme';
+import { FONT, Palette, RADIUS, SPACING, STONES } from '../theme';
+import { Backdrop } from '../components/Backdrop';
 import { Button } from '../components/Button';
 import { Stone } from '../components/Stone';
 
+/**
+ * Ein Stein im Titel, der sanft auf und ab schwebt.
+ *
+ * Die fünf sind zeitlich versetzt, wodurch eine langsame Welle durch das
+ * Spektrum läuft. Das gibt dem Startbildschirm Leben, ohne dass etwas
+ * blinkt oder um Aufmerksamkeit bettelt — er soll ruhig wirken, nicht
+ * aufdringlich.
+ */
+function FloatingStone({
+  level,
+  size,
+  index,
+  showShape,
+}: {
+  level: Level;
+  size: number;
+  index: number;
+  showShape: boolean;
+}) {
+  const y = useSharedValue(0);
+
+  useEffect(() => {
+    y.value = withDelay(
+      index * 170,
+      withRepeat(
+        withSequence(
+          withTiming(-7, { duration: 1500, easing: Easing.inOut(Easing.sin) }),
+          withTiming(0, { duration: 1500, easing: Easing.inOut(Easing.sin) }),
+        ),
+        -1,
+      ),
+    );
+  }, [y, index]);
+
+  const style = useAnimatedStyle(() => ({ transform: [{ translateY: y.value }] }));
+
+  return (
+    <Animated.View style={style}>
+      <Stone level={level} size={size} showShape={showShape} />
+    </Animated.View>
+  );
+}
+
 export interface HomeScreenProps {
   palette: Palette;
+  dark: boolean;
   stats: Stats;
   heuteGespielt: DailyResult | null;
   hatGespeichertesSpiel: boolean;
@@ -34,6 +89,7 @@ export interface HomeScreenProps {
 
 export function HomeScreen({
   palette,
+  dark,
   stats,
   heuteGespielt,
   hatGespeichertesSpiel,
@@ -48,20 +104,21 @@ export function HomeScreen({
   const nummer = puzzleNumber();
 
   return (
-    <ScrollView
-      style={{ backgroundColor: palette.bg }}
-      contentContainerStyle={[
-        styles.content,
-        { paddingTop: insets.top + SPACING.xl, paddingBottom: insets.bottom + SPACING.xl },
-      ]}
-      showsVerticalScrollIndicator={false}
-    >
+    <View style={[styles.root, { backgroundColor: palette.bg }]}>
+      <Backdrop palette={palette} dark={dark} />
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: insets.top + SPACING.xl, paddingBottom: insets.bottom + SPACING.xl },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
       {/* Titel mit dem Farbspektrum als Signatur */}
       <Animated.View entering={FadeInDown.duration(400)} style={styles.brand}>
         <View style={styles.spectrum}>
           {([1, 2, 3, 4, 5] as Level[]).map((l, i) => (
             <Animated.View key={l} entering={FadeInDown.delay(60 * i).duration(420)}>
-              <Stone level={l} size={26} showShape={showShapes} />
+              <FloatingStone level={l} size={30} index={i} showShape={showShapes} />
             </Animated.View>
           ))}
         </View>
@@ -90,8 +147,14 @@ export function HomeScreen({
               haptics.tapButton();
               onStart('daily');
             }}
-            style={[styles.dailyCard, { backgroundColor: palette.accent }]}
+            style={styles.dailyCardWrap}
           >
+            <LinearGradient
+              colors={dark ? ['#5BA4FF', '#2B6FE0'] : ['#4D9BFF', '#2B7FFF']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.dailyCard}
+            >
             <View style={styles.dailyTop}>
               <View style={styles.flexShrink}>
                 <Text style={styles.dailyTitle}>{strings.daily}</Text>
@@ -114,6 +177,7 @@ export function HomeScreen({
                 </Text>
               </View>
             ) : null}
+            </LinearGradient>
           </Pressable>
         </Animated.View>
 
@@ -148,7 +212,8 @@ export function HomeScreen({
       </Animated.View>
 
       <Text style={[styles.note, { color: palette.textFaint }]}>{strings.offlineNote}</Text>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -177,26 +242,36 @@ function LinkButton({
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1 },
   content: {
     paddingHorizontal: SPACING.lg,
     alignItems: 'center',
-    minHeight: '100%',
+    justifyContent: 'center',
+    flexGrow: 1,
   },
-  brand: { alignItems: 'center', marginBottom: SPACING.xxl, marginTop: 'auto' },
+  brand: { alignItems: 'center', marginBottom: SPACING.xl + SPACING.sm },
   spectrum: { flexDirection: 'row', gap: SPACING.sm, marginBottom: SPACING.md },
-  title: { fontSize: 40, fontWeight: '800', letterSpacing: 8, marginLeft: 8 },
+  title: { fontSize: 42, fontFamily: FONT.extraBold, letterSpacing: 9, marginLeft: 9 },
   modes: { width: '100%', maxWidth: 460, gap: SPACING.sm },
   full: { width: '100%' },
   flexShrink: { flexShrink: 1 },
-  dailyCard: {
+  dailyCardWrap: {
     borderRadius: RADIUS.lg,
+    overflow: 'hidden',
+    shadowColor: '#2B7FFF',
+    shadowOpacity: 0.34,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
+  },
+  dailyCard: {
     padding: SPACING.lg,
-    minHeight: 96,
+    minHeight: 100,
     justifyContent: 'center',
   },
   dailyTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  dailyTitle: { color: '#FFFFFF', fontSize: 22, fontWeight: '700' },
-  dailySub: { color: 'rgba(255,255,255,0.84)', fontSize: 13, marginTop: 3, fontWeight: '500' },
+  dailyTitle: { color: '#FFFFFF', fontSize: 22, fontFamily: FONT.bold },
+  dailySub: { color: 'rgba(255,255,255,0.84)', fontSize: 13, marginTop: 3, fontFamily: FONT.medium },
   streakBadge: {
     alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.2)',
@@ -205,30 +280,28 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     marginLeft: SPACING.sm,
   },
-  streakValue: { color: '#FFFFFF', fontSize: 20, fontWeight: '800' },
-  streakLabel: { color: 'rgba(255,255,255,0.8)', fontSize: 10, fontWeight: '600' },
+  streakValue: { color: '#FFFFFF', fontSize: 20, fontFamily: FONT.extraBold },
+  streakLabel: { color: 'rgba(255,255,255,0.8)', fontSize: 10, fontFamily: FONT.semiBold },
   dailyDone: {
     marginTop: SPACING.md,
     paddingTop: SPACING.sm,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.22)',
   },
-  dailyDoneText: { color: '#FFFFFF', fontSize: 13, fontWeight: '600' },
+  dailyDoneText: { color: '#FFFFFF', fontSize: 13, fontFamily: FONT.semiBold },
   links: {
     flexDirection: 'row',
     gap: SPACING.lg,
     marginTop: SPACING.xl,
-    marginBottom: 'auto',
     justifyContent: 'center',
     flexWrap: 'wrap',
   },
   link: { paddingVertical: SPACING.sm },
-  linkText: { fontSize: 15, fontWeight: '600' },
+  linkText: { fontSize: 15, fontFamily: FONT.semiBold },
   note: {
     fontSize: 12,
     textAlign: 'center',
-    marginTop: 'auto',
-    paddingTop: SPACING.xl,
+    paddingTop: SPACING.xxl,
     maxWidth: 320,
     lineHeight: 17,
   },

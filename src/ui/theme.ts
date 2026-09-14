@@ -11,22 +11,35 @@
 import { Level } from '../game/types';
 
 export interface StoneStyle {
-  /** Grundfarbe des Steins. */
+  /** Grundfarbe des Steins — die Mitte des Verlaufs. */
   fill: string;
-  /** Hellere Kante für die Lichtkante oben. */
+  /** Lichtseite oben. */
   glow: string;
+  /** Schattenseite unten. Gibt dem Stein Volumen statt einer Flachfarbe. */
+  shade: string;
   /** Farbe der inneren Form. */
   mark: string;
+  /** Schein, den höhere Stufen um sich werfen. */
+  aura: string;
   /** Form der Stufe — die Rückfallebene, wenn Farbe nicht erkennbar ist. */
   shape: 'circle' | 'ring' | 'square' | 'diamond' | 'star';
 }
 
+/**
+ * Die fünf Spielfarben.
+ *
+ * Jede Stufe ist als Dreiklang aus Licht, Grundton und Schatten angelegt,
+ * nicht als einzelner Wert. Ein senkrechter Verlauf zwischen diesen dreien
+ * lässt den Stein gewölbt wirken, als fiele Licht von oben darauf — der
+ * Unterschied zwischen einem farbigen Rechteck und einem Spielstein, den
+ * man anfassen möchte.
+ */
 export const STONES: Record<Level, StoneStyle> = {
-  1: { fill: '#FF4D6A', glow: '#FF8098', mark: '#8C0F28', shape: 'circle' },
-  2: { fill: '#FF9038', glow: '#FFB36E', mark: '#8A4407', shape: 'ring' },
-  3: { fill: '#FFD23F', glow: '#FFE483', mark: '#8A6800', shape: 'square' },
-  4: { fill: '#3ED598', glow: '#79E7BB', mark: '#0A6141', shape: 'diamond' },
-  5: { fill: '#4D9BFF', glow: '#86BCFF', mark: '#0B3C80', shape: 'star' },
+  1: { fill: '#FF4D6A', glow: '#FF8FA3', shade: '#D93755', mark: '#7A0C22', aura: 'rgba(255,77,106,0.45)', shape: 'circle' },
+  2: { fill: '#FF9038', glow: '#FFBE82', shade: '#E06E17', mark: '#7A3A05', aura: 'rgba(255,144,56,0.45)', shape: 'ring' },
+  3: { fill: '#FFD23F', glow: '#FFE999', shade: '#E5B111', mark: '#7A5A00', aura: 'rgba(255,210,63,0.45)', shape: 'square' },
+  4: { fill: '#3ED598', glow: '#84EBC2', shade: '#1CB479', mark: '#07553A', aura: 'rgba(62,213,152,0.45)', shape: 'diamond' },
+  5: { fill: '#4D9BFF', glow: '#95C6FF', shade: '#2676E6', mark: '#08336E', aura: 'rgba(77,155,255,0.55)', shape: 'star' },
 };
 
 /** Prisma: kein Stein, sondern ein Aufleuchten im Moment der Explosion. */
@@ -51,10 +64,10 @@ export interface Palette {
 }
 
 export const DARK: Palette = {
-  bg: '#0A0D14',
+  bg: '#080B11',
   bgElevated: '#141926',
-  boardBg: '#10151F',
-  cellEmpty: '#1A2030',
+  boardBg: 'rgba(255,255,255,0.022)',
+  cellEmpty: 'rgba(255,255,255,0.045)',
   text: '#F2F5FA',
   textMuted: '#98A2B8',
   textFaint: '#5A6478',
@@ -65,10 +78,10 @@ export const DARK: Palette = {
 };
 
 export const LIGHT: Palette = {
-  bg: '#F6F7FB',
+  bg: '#F4F6FB',
   bgElevated: '#FFFFFF',
-  boardBg: '#ECEEF5',
-  cellEmpty: '#DFE3ED',
+  boardBg: 'rgba(16,21,31,0.022)',
+  cellEmpty: 'rgba(16,21,31,0.062)',
   text: '#10151F',
   textMuted: '#5A6478',
   textFaint: '#98A2B8',
@@ -110,8 +123,28 @@ export const TIMING = {
   screenFade: 220,
 };
 
+/**
+ * Schrift: Outfit.
+ *
+ * Eine geometrische Grotesk mit sehr runden Kleinbuchstaben und offenen
+ * Ziffern — sie greift die Kreise, Ringe und abgerundeten Quadrate der
+ * Spielsteine auf, statt daneben zu stehen. Bewusst nicht eine der
+ * üblichen Standardschriften, die inzwischen jede zweite App verwendet.
+ *
+ * Bei eingebundenen Schriften wird das Gewicht über die Familie gewählt,
+ * nicht über fontWeight: Sonst rechnet das System sich ein Gewicht selbst
+ * zusammen, was auf Android sichtbar verzerrt.
+ */
 export const FONT = {
-  /** Zahlen laufen monospace, damit der Punktestand beim Zählen nicht zappelt. */
-  mono: 'System',
-  display: 'System',
+  regular: 'Outfit_400Regular',
+  medium: 'Outfit_500Medium',
+  semiBold: 'Outfit_600SemiBold',
+  bold: 'Outfit_700Bold',
+  extraBold: 'Outfit_800ExtraBold',
 };
+
+/**
+ * Ziffern mit gleicher Laufweite. Ohne das springt der Punktestand beim
+ * Hochzählen seitlich hin und her, weil eine 1 schmaler ist als eine 8.
+ */
+export const TABULAR = { fontVariant: ['tabular-nums' as const] };

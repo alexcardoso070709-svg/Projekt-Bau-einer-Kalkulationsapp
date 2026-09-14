@@ -17,8 +17,27 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { Cell, Level, Position } from '../../game/types';
-import { Palette, PRISMA, RADIUS, TIMING } from '../theme';
+import { Palette, RADIUS, TIMING } from '../theme';
+import { Burst, FloatingScore, PrismaBlast } from './Effects';
 import { Stone } from './Stone';
+
+/** Ein Effekt, der an einer Zelle des Feldes sitzt. */
+interface CellEffect {
+  /** Eindeutig je Auslösung, damit die Animation neu startet. */
+  id: string;
+  row: number;
+  col: number;
+}
+
+export interface BurstEffect extends CellEffect {
+  colour: string;
+}
+
+export interface FloatEffect extends CellEffect {
+  value: number;
+  colour: string;
+  chain: number;
+}
 
 const GAP_RATIO = 0.085;
 
@@ -70,7 +89,16 @@ const CellView = React.memo(function CellView({
       <View
         style={[
           styles.cell,
-          { width: size, height: size, borderRadius: size * 0.28, backgroundColor: emptyColor },
+          {
+            width: size,
+            height: size,
+            borderRadius: size * 0.28,
+            backgroundColor: emptyColor,
+            // Eine Spur Licht auf der Unterkante lässt die leere Zelle als
+            // Mulde erscheinen statt als aufgesetztes graues Feld.
+            borderBottomWidth: Math.max(1, size * 0.028),
+            borderBottomColor: 'rgba(255,255,255,0.05)',
+          },
         ]}
       />
     );
@@ -82,44 +110,6 @@ const CellView = React.memo(function CellView({
     </Animated.View>
   );
 });
-
-/** Der Lichtblitz einer Prisma-Explosion. */
-function PrismaFlash({ size }: { size: number }) {
-  const progress = useSharedValue(0);
-
-  useEffect(() => {
-    progress.value = withTiming(1, { duration: TIMING.prismaFlash });
-  }, [progress]);
-
-  const core = useAnimatedStyle(() => ({
-    opacity: 1 - progress.value,
-    transform: [{ scale: 0.5 + progress.value * 2.1 }],
-  }));
-
-  const ring = useAnimatedStyle(() => ({
-    opacity: (1 - progress.value) * 0.75,
-    transform: [{ scale: 0.3 + progress.value * 3.2 }],
-  }));
-
-  return (
-    <View pointerEvents="none" style={[styles.flashWrap, { width: size, height: size }]}>
-      <Animated.View
-        style={[
-          styles.flashRing,
-          { width: size, height: size, borderRadius: size / 2, borderColor: PRISMA.ring },
-          ring,
-        ]}
-      />
-      <Animated.View
-        style={[
-          styles.flashCore,
-          { width: size * 0.6, height: size * 0.6, borderRadius: size * 0.3 },
-          core,
-        ]}
-      />
-    </View>
-  );
-}
 
 export interface FallingStone {
   col: number;
@@ -182,6 +172,10 @@ export interface BoardProps {
   falling?: FallingStone | null;
   /** Stellen, an denen gerade ein Prisma gezündet hat. */
   flashes?: Position[];
+  /** Funkenstöße aus verschmelzenden Zellen. */
+  bursts?: BurstEffect[];
+  /** Aufsteigende Punktzahlen. */
+  floats?: FloatEffect[];
   /** Hebt eine Spalte hervor — für den Tipp-Knopf. */
   highlightColumn?: number | null;
 }
@@ -195,6 +189,8 @@ export function GameBoard({
   disabled = false,
   falling = null,
   flashes = [],
+  bursts = [],
+  floats = [],
   highlightColumn = null,
 }: BoardProps) {
   const gap = Math.round(cellSize * GAP_RATIO);
@@ -225,17 +221,58 @@ export function GameBoard({
         <Falling stone={falling} cellSize={cellSize} gap={gap} showShape={showShapes} />
       ) : null}
 
+      {bursts.map((b) => (
+        <View
+          key={b.id}
+          pointerEvents="none"
+          style={[
+            styles.effectSlot,
+            {
+              left: b.col * (cellSize + gap),
+              top: b.row * (cellSize + gap),
+              width: cellSize,
+              height: cellSize,
+            },
+          ]}
+        >
+          <Burst colour={b.colour} cell={cellSize} />
+        </View>
+      ))}
+
       {flashes.map((p, i) => (
         <View
           key={`f${p.row}-${p.col}-${i}`}
           pointerEvents="none"
-          style={{
-            position: 'absolute',
-            left: p.col * (cellSize + gap),
-            top: p.row * (cellSize + gap),
-          }}
+          style={[
+            styles.effectSlot,
+            {
+              left: p.col * (cellSize + gap),
+              top: p.row * (cellSize + gap),
+              width: cellSize,
+              height: cellSize,
+            },
+          ]}
         >
-          <PrismaFlash size={cellSize} />
+          <PrismaBlast cell={cellSize} />
+        </View>
+      ))}
+
+      {floats.map((f) => (
+        <View
+          key={f.id}
+          pointerEvents="none"
+          style={[
+            styles.effectSlot,
+            {
+              left: f.col * (cellSize + gap),
+              top: f.row * (cellSize + gap),
+              width: cellSize,
+              height: cellSize,
+              zIndex: 10,
+            },
+          ]}
+        >
+          <FloatingScore value={f.value} colour={f.colour} chain={f.chain} cell={cellSize} />
         </View>
       ))}
 
@@ -279,11 +316,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   touch: { height: '100%' },
-  flashWrap: { alignItems: 'center', justifyContent: 'center' },
-  flashRing: {
-    position: 'absolute',
-    borderWidth: 2,
-    backgroundColor: 'transparent',
-  },
-  flashCore: { position: 'absolute', backgroundColor: PRISMA.core },
+  effectSlot: { position: 'absolute' },
 });
