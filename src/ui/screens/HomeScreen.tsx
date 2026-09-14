@@ -24,7 +24,7 @@ import { Level, Mode } from '../../game/types';
 import { numberLocale, strings } from '../../i18n/strings';
 import { DailyResult, Stats } from '../../storage/store';
 import { formatNumber } from '../../game/share';
-import * as haptics from '../haptics';
+import * as feedback from '../feedback';
 import { FONT, Palette, RADIUS, SPACING, STONES } from '../theme';
 import { Backdrop } from '../components/Backdrop';
 import { Button } from '../components/Button';
@@ -144,7 +144,7 @@ export function HomeScreen({
             accessibilityRole="button"
             accessibilityLabel={`${strings.daily}. ${strings.dailySub}`}
             onPress={() => {
-              haptics.tapButton();
+              feedback.button();
               onStart('daily');
             }}
             style={styles.dailyCardWrap}
@@ -230,7 +230,7 @@ function LinkButton({
     <Pressable
       accessibilityRole="button"
       onPress={() => {
-        haptics.tapButton();
+        feedback.button();
         onPress();
       }}
       hitSlop={8}

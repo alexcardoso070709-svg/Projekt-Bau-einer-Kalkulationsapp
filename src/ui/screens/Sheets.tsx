@@ -14,7 +14,7 @@ import { formatNumber } from '../../game/share';
 import { Level } from '../../game/types';
 import { numberLocale, strings } from '../../i18n/strings';
 import { Settings, Stats, ThemeChoice } from '../../storage/store';
-import * as haptics from '../haptics';
+import * as feedback from '../feedback';
 import { FONT, Palette, RADIUS, SPACING, STONES } from '../theme';
 import { Button } from '../components/Button';
 import { Stone } from '../components/Stone';
@@ -176,7 +176,7 @@ export function SettingsSheet({
               accessibilityRole="button"
               accessibilityState={{ selected: aktiv }}
               onPress={() => {
-                haptics.tapButton();
+                feedback.button();
                 onChange({ ...settings, theme: o.key });
               }}
               style={[
@@ -200,6 +200,12 @@ export function SettingsSheet({
         })}
       </View>
 
+      <Schalter
+        label={strings.sound}
+        value={settings.sound}
+        palette={palette}
+        onChange={(v) => onChange({ ...settings, sound: v })}
+      />
       <Schalter
         label={strings.haptics}
         value={settings.haptics}
@@ -251,7 +257,7 @@ function Schalter({
       <Switch
         value={value}
         onValueChange={(v) => {
-          haptics.tapButton();
+          feedback.button();
           onChange(v);
         }}
         trackColor={{ true: palette.accent, false: palette.cellEmpty }}

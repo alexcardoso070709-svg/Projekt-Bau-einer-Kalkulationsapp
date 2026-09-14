@@ -12,7 +12,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
-import { tapButton } from '../haptics';
+import { button as feedbackButton } from '../feedback';
 import { FONT, Palette, RADIUS, SPACING } from '../theme';
 
 export interface ButtonProps {
@@ -53,7 +53,7 @@ export function Button({
   }, [scale]);
 
   const handlePress = useCallback(() => {
-    tapButton();
+    feedbackButton();
     onPress();
   }, [onPress]);
 

@@ -29,7 +29,7 @@ import { createGame, playMove, suggestColumn } from '../../game/engine';
 import { COLS, GameState, Level, Mode, Position, ROWS } from '../../game/types';
 import { strings } from '../../i18n/strings';
 import { Settings } from '../../storage/store';
-import * as haptics from '../haptics';
+import * as feedback from '../feedback';
 import { FONT, Palette, RADIUS, SPACING, STONES, TABULAR, TIMING } from '../theme';
 import { Backdrop } from '../components/Backdrop';
 import { BurstEffect, FallingStone, FloatEffect, GameBoard } from '../components/Board';
@@ -166,7 +166,7 @@ export function GameScreen({
         level: game.queue[0] as Level,
         nonce: nonce.current,
       });
-      if (settings.haptics) haptics.tapDrop();
+      feedback.drop();
       await sleep(TIMING.drop + 40);
       if (!alive.current) return;
 
@@ -213,9 +213,9 @@ export function GameScreen({
         if (prismaHier) {
           setFlashes(prismaGruppen.map((g) => g.anchor));
           erschuettern();
-          if (settings.haptics) haptics.tapPrisma();
-        } else if (settings.haptics) {
-          haptics.tapMerge(step.chain);
+          feedback.prisma();
+        } else {
+          feedback.merge(step.chain);
         }
 
         setDisplay(step.board);
@@ -243,7 +243,7 @@ export function GameScreen({
       setBusy(false);
 
       if (nextState.over) {
-        if (settings.haptics) haptics.tapGameOver();
+        feedback.gameOver();
         onPersist(null);
         await sleep(420);
         if (!alive.current) return;
@@ -252,27 +252,27 @@ export function GameScreen({
         onPersist(nextState);
       }
     },
-    [busy, game, mode, settings.haptics, onFinish, onPersist, zeigeKette],
+    [busy, game, mode, onFinish, onPersist, zeigeKette, erschuettern],
   );
 
   const handleUndo = useCallback(() => {
     const vorher = history.current.pop();
     if (!vorher || busy) return;
-    if (settings.haptics) haptics.tapButton();
+    feedback.button();
     setGame(vorher);
     setDisplay(vorher.board);
     setShownScore(vorher.score);
     onPersist(vorher);
-  }, [busy, settings.haptics, onPersist]);
+  }, [busy, onPersist]);
 
   const handleHint = useCallback(() => {
     if (busy || game.over) return;
     const col = suggestColumn(game);
     if (col === null) return;
-    if (settings.haptics) haptics.tapButton();
+    feedback.button();
     setHintColumn(col);
     setTimeout(() => alive.current && setHintColumn(null), 1400);
-  }, [busy, game, settings.haptics]);
+  }, [busy, game]);
 
   const zuegeUebrig =
     game.moveLimit !== null ? Math.max(0, game.moveLimit - game.moves) : null;
@@ -295,7 +295,7 @@ export function GameScreen({
           accessibilityRole="button"
           accessibilityLabel={strings.home}
           onPress={() => {
-            haptics.tapButton();
+            feedback.button();
             onExit();
           }}
           hitSlop={12}

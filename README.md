@@ -55,6 +55,13 @@ Form (Kreis, Ring, Quadrat, Raute, Stern). Rund acht Prozent der Männer
 unterscheiden Rot und Grün schlecht; ein Spiel, dessen ganze Mechanik auf Farbe
 beruht, wäre für sie sonst unspielbar.
 
+**Pentatonische Klänge.** Alle Töne sind synthetisch erzeugt (`scripts/`),
+kein Lizenzrisiko. Die Merge-Töne folgen einer pentatonischen Leiter — in ihr
+gibt es keine dissonanten Intervalle, also klingt jede Kettenfolge harmonisch,
+obwohl niemand vorhersagen kann, welche Töne in welcher Reihenfolge erklingen.
+Der Spieler spielt beim Verschmelzen unbewusst eine Melodie. Das Spiel
+respektiert den Stummschalter des Geräts und unterbricht laufende Musik nicht.
+
 ### Wie die Balance entstanden ist
 
 Die Spielwerte sind nicht geschätzt, sondern erspielt: Eine Simulation hat
@@ -101,7 +108,9 @@ src/game/      Spiellogik — reines TypeScript, kein React, vollständig getest
   board.ts       Ablegen, Schwerkraft, Gruppensuche
   engine.ts      Zugauflösung, Ketten, Punkte
   share.ts       Emoji-Ergebnis
-src/ui/        Oberfläche, Gestaltung, Vibration
+src/ui/        Oberfläche, Gestaltung, Ton und Vibration
+  sound.ts       Klangwiedergabe
+  feedback.ts    Ton und Vibration gemeinsam ausgelöst
 src/storage/   Lokale Speicherung (kein Server)
 src/i18n/      Texte (DE/EN)
 ```
@@ -228,6 +237,12 @@ Spiel weiter, bis kein Zug mehr möglich ist. Für die Bestenjagd.
 ZEN
 Kein Spielende, kein Zeitdruck. Züge beliebig zurücknehmen. Für zwischendurch.
 
+KLANG UND GEFÜHL
+Jede Verschmelzung klingt eine Stufe höher als die vorige. Weil die Töne einer
+pentatonischen Leiter folgen, klingt jede Kette harmonisch — du spielst beim
+Puzzeln nebenbei eine Melodie. Das Spiel respektiert deinen Stummschalter und
+unterbricht deine Musik nicht.
+
 WAS NICHT DRIN IST
 Keine Werbung. Keine Käufe. Keine Energie-Leisten, die dich zum Warten zwingen.
 Kein Konto. Keine Datensammlung. Die App braucht kein Internet — im Flugzeug,
@@ -258,8 +273,10 @@ Was noch aussteht:
 - **Kein Test auf echter iOS- oder Android-Hardware.** Vibration und
   Fall-Animationen laufen im Browser anders als auf dem Gerät. Vor dem
   Hochladen mit Expo Go auf einem echten Telefon durchspielen.
-- **Kein Ton.** Es sind keine Klangdateien enthalten. Vibration ersetzt sie
-  teilweise, aber Ton würde das Spiel spürbar wertiger machen.
+- **Die Klänge sind nicht abgehört.** Sie wurden rechnerisch erzeugt und auf
+  Übersteuerung, Knacken und Pegelverhältnis geprüft, aber nie angehört. Hör
+  sie einmal mit Kopfhörern durch; die Erzeugung liegt in `scripts/klang.py`
+  und lässt sich in Sekunden neu abstimmen.
 - **Der Name ist ungeprüft** (siehe Schritt 2).
 
 Und eine Erwartung geradegerückt: Ob eine App in die Charts kommt, hängt an

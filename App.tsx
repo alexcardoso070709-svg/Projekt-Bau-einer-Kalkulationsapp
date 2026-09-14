@@ -35,7 +35,7 @@ import {
   saveSettings,
   saveStats,
 } from './src/storage/store';
-import { setHaptics } from './src/ui/haptics';
+import * as feedback from './src/ui/feedback';
 import { DARK, LIGHT } from './src/ui/theme';
 import { GameScreen } from './src/ui/screens/GameScreen';
 import { HomeScreen } from './src/ui/screens/HomeScreen';
@@ -71,9 +71,12 @@ export default function App() {
       // Serie zurücksetzen, falls ein Tag ausgelassen wurde.
       setStats({ ...s, streak: currentStreak(s) });
       setSettings(e);
-      setHaptics(e.haptics);
+      feedback.configure(e.haptics, e.sound);
       setGespeichert(g);
       setBereit(true);
+      // Klänge im Hintergrund nachladen: Sie dürfen den ersten Bildaufbau
+      // nicht verzögern, sind aber vor dem ersten Zug längst bereit.
+      feedback.init();
     })();
     return () => {
       abgebrochen = true;
@@ -86,7 +89,7 @@ export default function App() {
 
   const aendereEinstellungen = useCallback((neu: Settings) => {
     setSettings(neu);
-    setHaptics(neu.haptics);
+    feedback.configure(neu.haptics, neu.sound);
     saveSettings(neu);
   }, []);
 
