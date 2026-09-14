@@ -12,7 +12,7 @@ Eine kleine Web-App, um deinen Kleiderschrank digital zu erfassen, Outfits zu ko
 
 Die App braucht eine über HTTPS erreichbare URL, damit Safari sie zum Home-Bildschirm hinzufügen kann.
 
-1. **GitHub Pages aktivieren** (einmalig): Im Repo unter *Settings → Pages → Source* auf **GitHub Actions** stellen. Der Workflow `.github/workflows/deploy-pages.yml` deployed die App bei jedem Push auf `main` automatisch.
+1. **GitHub Pages aktivieren** (einmalig): Im Repo unter *Settings → Pages → Source* auf **GitHub Actions** stellen. Der Workflow `.github/workflows/deploy-pages.yml` deployed die App danach bei jedem Push auf den Default-Branch automatisch.
 2. Nach dem ersten erfolgreichen Deploy findest du die URL unter *Settings → Pages* (z. B. `https://<user>.github.io/<repo>/`).
 3. Diese URL auf dem iPhone in **Safari** öffnen.
 4. Auf das **Teilen-Symbol** tippen → **„Zum Home-Bildschirm"** auswählen.
