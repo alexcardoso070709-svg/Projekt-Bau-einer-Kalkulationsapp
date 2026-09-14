@@ -11,7 +11,7 @@
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Kleiderschrank">
 <meta name="mobile-web-app-capable" content="yes">
 
@@ -19,157 +19,195 @@
 </head>
 <body>
 <header class="app-header">
-  <h1>👕 Mein Kleiderschrank</h1>
-  <nav class="tabs">
-    <button class="tab-btn active" data-tab="schrank">Kleiderschrank</button>
-    <button class="tab-btn" data-tab="outfits">Outfits</button>
-    <button class="tab-btn" data-tab="kombinieren">Kombinieren</button>
-  </nav>
+  <h1 id="headerTitle">Kleiderschrank</h1>
+  <button id="settingsBtn" class="icon-btn" aria-label="Einstellungen und Backup">⚙️</button>
 </header>
 
 <main>
-  <!-- KLEIDERSCHRANK TAB -->
+  <!-- SCHRANK -->
   <section id="schrank" class="tab-panel active">
-    <div class="panel-header">
-      <h2>Meine Kleidungsstücke</h2>
-      <button id="addItemBtn" class="btn-primary">+ Teil hinzufügen</button>
-    </div>
-
     <div class="filters">
-      <select id="filterCategory">
-        <option value="">Alle Kategorien</option>
-        <option value="Oberteil">Oberteil</option>
-        <option value="Hose">Hose</option>
-        <option value="Kleid">Kleid</option>
-        <option value="Jacke">Jacke</option>
-        <option value="Schuhe">Schuhe</option>
-        <option value="Accessoire">Accessoire</option>
-      </select>
-      <select id="filterColor">
-        <option value="">Alle Farben</option>
-      </select>
-      <input type="text" id="searchInput" placeholder="Suchen...">
+      <input type="search" id="searchInput" placeholder="Suchen…" aria-label="Kleidungsstücke durchsuchen">
+      <div class="filter-row">
+        <select id="filterCategory" aria-label="Nach Kategorie filtern">
+          <option value="">Alle Kategorien</option>
+        </select>
+        <select id="filterColor" aria-label="Nach Farbe filtern">
+          <option value="">Alle Farben</option>
+        </select>
+        <select id="filterSeason" aria-label="Nach Saison filtern">
+          <option value="">Alle Saisons</option>
+        </select>
+        <select id="sortBy" aria-label="Sortierung">
+          <option value="recent">Zuletzt hinzugefügt</option>
+          <option value="name">Name A–Z</option>
+          <option value="worn">Häufig getragen</option>
+          <option value="unworn">Selten getragen</option>
+        </select>
+      </div>
+      <p id="resultCount" class="result-count"></p>
     </div>
 
     <div id="itemGrid" class="item-grid"></div>
-    <p id="emptyState" class="empty-state" hidden>Noch keine Kleidungsstücke vorhanden. Füge dein erstes Teil hinzu!</p>
+    <div id="emptyState" class="empty-state" hidden>
+      <p class="empty-emoji">🧺</p>
+      <p>Dein Schrank ist noch leer.</p>
+      <p class="empty-hint">Tippe unten rechts auf <strong>+</strong> und erfasse dein erstes Teil.</p>
+    </div>
+    <p id="noMatches" class="empty-state" hidden>Keine Teile passen zu diesen Filtern.</p>
+
+    <button id="addItemBtn" class="fab" aria-label="Kleidungsstück hinzufügen">+</button>
   </section>
 
-  <!-- OUTFITS TAB -->
+  <!-- OUTFITS -->
   <section id="outfits" class="tab-panel">
-    <div class="panel-header">
-      <h2>Gespeicherte Outfits</h2>
-    </div>
     <div id="outfitGrid" class="outfit-grid"></div>
-    <p id="emptyOutfits" class="empty-state" hidden>Noch keine Outfits gespeichert. Erstelle eins im Tab "Kombinieren"!</p>
+    <div id="emptyOutfits" class="empty-state" hidden>
+      <p class="empty-emoji">✨</p>
+      <p>Noch keine Outfits gespeichert.</p>
+      <p class="empty-hint">Stelle im Tab <strong>Kombinieren</strong> eins zusammen.</p>
+    </div>
   </section>
 
-  <!-- KOMBINIEREN TAB -->
+  <!-- KOMBINIEREN -->
   <section id="kombinieren" class="tab-panel">
-    <div class="panel-header">
-      <h2>Outfit zusammenstellen</h2>
+    <div class="combi-preview-card">
+      <div class="combi-preview-head">
+        <h2 id="combiHeading">Neues Outfit</h2>
+        <button id="resetOutfitBtn" class="link-btn">Zurücksetzen</button>
+      </div>
+      <div id="outfitPreview" class="outfit-preview"></div>
+      <p id="combiHint" class="combi-hint" hidden></p>
+      <input type="text" id="outfitNameInput" placeholder="Name, z.B. Business-Look" aria-label="Name des Outfits">
       <div class="combi-actions">
-        <button id="randomOutfitBtn" class="btn-secondary">🎲 Zufälliges Outfit</button>
-        <button id="saveOutfitBtn" class="btn-primary">💾 Outfit speichern</button>
+        <button id="randomOutfitBtn" class="btn-secondary">🎲 Vorschlag</button>
+        <button id="saveOutfitBtn" class="btn-primary">Speichern</button>
       </div>
+      <button id="saveAsNewBtn" class="link-btn block" hidden>Als neues Outfit speichern</button>
     </div>
-    <div class="combi-layout">
-      <div class="combi-picker">
-        <div class="picker-col" data-cat="Oberteil">
-          <h3>Oberteil</h3>
-          <div class="picker-list" data-cat-list="Oberteil"></div>
-        </div>
-        <div class="picker-col" data-cat="Hose">
-          <h3>Hose / Rock</h3>
-          <div class="picker-list" data-cat-list="Hose"></div>
-        </div>
-        <div class="picker-col" data-cat="Kleid">
-          <h3>Kleid</h3>
-          <div class="picker-list" data-cat-list="Kleid"></div>
-        </div>
-        <div class="picker-col" data-cat="Jacke">
-          <h3>Jacke</h3>
-          <div class="picker-list" data-cat-list="Jacke"></div>
-        </div>
-        <div class="picker-col" data-cat="Schuhe">
-          <h3>Schuhe</h3>
-          <div class="picker-list" data-cat-list="Schuhe"></div>
-        </div>
-        <div class="picker-col" data-cat="Accessoire">
-          <h3>Accessoires</h3>
-          <div class="picker-list" data-cat-list="Accessoire"></div>
-        </div>
-      </div>
-      <div class="combi-preview">
-        <h3>Vorschau</h3>
-        <div id="outfitPreview" class="outfit-preview"></div>
-        <label class="outfit-name-label">
-          Name des Outfits
-          <input type="text" id="outfitNameInput" placeholder="z.B. Business-Look">
-        </label>
-      </div>
+
+    <div class="season-switch" role="group" aria-label="Saison filtern">
+      <button class="season-btn active" data-season="">Alle</button>
+      <button class="season-btn" data-season="Sommer">Sommer</button>
+      <button class="season-btn" data-season="Übergang">Übergang</button>
+      <button class="season-btn" data-season="Winter">Winter</button>
     </div>
+
+    <div id="pickerStrips"></div>
+    <p id="emptyCombi" class="empty-state" hidden>Lege erst ein paar Kleidungsstücke an.</p>
+  </section>
+
+  <!-- ÜBERSICHT -->
+  <section id="uebersicht" class="tab-panel">
+    <div id="statsContent"></div>
   </section>
 </main>
 
-<!-- MODAL: Kleidungsstück hinzufügen/bearbeiten -->
+<nav class="tabbar" role="tablist">
+  <button class="tab-btn active" data-tab="schrank" data-title="Kleiderschrank" role="tab" aria-selected="true">
+    <span class="tab-icon">👕</span><span class="tab-label">Schrank</span>
+  </button>
+  <button class="tab-btn" data-tab="outfits" data-title="Outfits" role="tab" aria-selected="false">
+    <span class="tab-icon">✨</span><span class="tab-label">Outfits</span>
+  </button>
+  <button class="tab-btn" data-tab="kombinieren" data-title="Kombinieren" role="tab" aria-selected="false">
+    <span class="tab-icon">🎨</span><span class="tab-label">Kombinieren</span>
+  </button>
+  <button class="tab-btn" data-tab="uebersicht" data-title="Übersicht" role="tab" aria-selected="false">
+    <span class="tab-icon">📊</span><span class="tab-label">Übersicht</span>
+  </button>
+</nav>
+
+<!-- Kleidungsstück anlegen/bearbeiten -->
 <div id="itemModal" class="modal" hidden>
   <div class="modal-content">
-    <button class="modal-close" id="closeModalBtn">&times;</button>
-    <h2 id="modalTitle">Neues Kleidungsstück</h2>
+    <div class="modal-head">
+      <h2 id="modalTitle">Neues Teil</h2>
+      <button class="icon-btn" id="closeModalBtn" aria-label="Schließen">✕</button>
+    </div>
     <form id="itemForm">
       <input type="hidden" id="itemId">
+
+      <div class="photo-field">
+        <img id="itemImagePreview" class="image-preview" alt="" hidden>
+        <div id="imagePlaceholder" class="image-placeholder">Kein Foto</div>
+        <div class="photo-actions">
+          <label class="btn-secondary file-label">
+            Foto wählen
+            <input type="file" id="itemImage" accept="image/*">
+          </label>
+          <button type="button" id="removeImageBtn" class="link-btn" hidden>Foto entfernen</button>
+        </div>
+        <p id="imageStatus" class="field-hint" hidden></p>
+      </div>
+
       <label>Name
-        <input type="text" id="itemName" required placeholder="z.B. Blaue Jeans">
+        <input type="text" id="itemName" required placeholder="z.B. Blaue Jeans" autocomplete="off">
       </label>
-      <label>Kategorie
-        <select id="itemCategory" required>
-          <option value="Oberteil">Oberteil</option>
-          <option value="Hose">Hose</option>
-          <option value="Kleid">Kleid</option>
-          <option value="Jacke">Jacke</option>
-          <option value="Schuhe">Schuhe</option>
-          <option value="Accessoire">Accessoire</option>
-        </select>
-      </label>
-      <label>Farbe
-        <input type="text" id="itemColor" required placeholder="z.B. Blau" list="colorSuggestions">
-        <datalist id="colorSuggestions">
-          <option value="Schwarz"></option>
-          <option value="Weiß"></option>
-          <option value="Blau"></option>
-          <option value="Grau"></option>
-          <option value="Beige"></option>
-          <option value="Braun"></option>
-          <option value="Rot"></option>
-          <option value="Grün"></option>
-          <option value="Gelb"></option>
-          <option value="Rosa"></option>
-        </datalist>
-      </label>
-      <label>Saison
-        <select id="itemSeason">
-          <option value="Ganzjährig">Ganzjährig</option>
-          <option value="Sommer">Sommer</option>
-          <option value="Winter">Winter</option>
-          <option value="Übergang">Übergang</option>
-        </select>
-      </label>
+      <div class="field-pair">
+        <label>Kategorie
+          <select id="itemCategory" required></select>
+        </label>
+        <label>Saison
+          <select id="itemSeason"></select>
+        </label>
+      </div>
+      <div class="field-pair">
+        <label>Farbe
+          <input type="text" id="itemColor" required placeholder="z.B. Blau" list="colorSuggestions" autocomplete="off">
+          <datalist id="colorSuggestions"></datalist>
+        </label>
+        <label>Marke
+          <input type="text" id="itemBrand" placeholder="optional" autocomplete="off">
+        </label>
+      </div>
       <label>Notiz
-        <input type="text" id="itemNote" placeholder="optional">
+        <input type="text" id="itemNote" placeholder="optional" autocomplete="off">
       </label>
-      <label>Foto
-        <input type="file" id="itemImage" accept="image/*">
+      <label class="checkbox-label">
+        <input type="checkbox" id="itemFavorite">
+        <span>Lieblingsstück</span>
       </label>
-      <img id="itemImagePreview" class="image-preview" hidden>
+
+      <div id="wearBox" class="wear-box" hidden>
+        <p id="wearInfo" class="wear-info"></p>
+        <button type="button" id="wearItemBtn" class="btn-secondary">Heute getragen</button>
+      </div>
+
       <div class="modal-actions">
         <button type="button" id="deleteItemBtn" class="btn-danger" hidden>Löschen</button>
-        <button type="submit" class="btn-primary">Speichern</button>
+        <button type="submit" class="btn-primary grow">Speichern</button>
       </div>
     </form>
   </div>
 </div>
 
-<script src="app.js"></script>
+<!-- Einstellungen / Backup -->
+<div id="settingsModal" class="modal" hidden>
+  <div class="modal-content">
+    <div class="modal-head">
+      <h2>Backup &amp; Daten</h2>
+      <button class="icon-btn" id="closeSettingsBtn" aria-label="Schließen">✕</button>
+    </div>
+    <p class="settings-text">
+      Deine Daten liegen nur in diesem Browser. Lege regelmäßig eine Sicherung an –
+      besonders bevor du das Gerät wechselst.
+    </p>
+    <div class="settings-actions">
+      <button id="exportBtn" class="btn-primary">Sicherung exportieren</button>
+      <label class="btn-secondary file-label">
+        Sicherung einlesen
+        <input type="file" id="importInput" accept="application/json,.json">
+      </label>
+    </div>
+    <p id="storageInfo" class="settings-text muted"></p>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="js/store.js"></script>
+<script src="js/images.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>

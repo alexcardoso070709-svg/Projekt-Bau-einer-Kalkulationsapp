@@ -1,9 +1,11 @@
-const CACHE_NAME = 'kleiderschrank-v2';
+const CACHE_NAME = 'kleiderschrank-v3';
 const ASSETS = [
   './',
   './index.html',
   './style.css',
-  './app.js',
+  './js/store.js',
+  './js/images.js',
+  './js/app.js',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',

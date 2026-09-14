@@ -1,12 +1,18 @@
 # Mein Kleiderschrank
 
-Eine kleine Web-App, um deinen Kleiderschrank digital zu erfassen, Outfits zu kombinieren und zu speichern. Läuft komplett im Browser (Daten werden lokal via `localStorage` gespeichert) und ist als installierbare PWA nutzbar.
+Eine Web-App, um den eigenen Kleiderschrank zu erfassen, Outfits zu kombinieren und zu sehen, was man eigentlich alles besitzt. Läuft ohne Server und ohne Build-Schritt direkt im Browser und lässt sich auf dem iPhone als App installieren.
 
 ## Funktionen
 
-- **Kleiderschrank**: Kleidungsstücke mit Foto, Kategorie, Farbe, Saison und Notiz anlegen, filtern und durchsuchen.
-- **Kombinieren**: Pro Kategorie ein Teil auswählen, Live-Vorschau des Outfits, Zufalls-Outfit-Vorschlag.
-- **Outfits**: Gespeicherte Kombinationen ansehen, bearbeiten oder löschen.
+**Schrank** – Teile mit Foto, Kategorie, Farbe, Saison, Marke und Notiz erfassen. Suche, Filter nach Kategorie/Farbe/Saison und Sortierung (zuletzt hinzugefügt, A–Z, häufig/selten getragen). Lieblingsstücke markieren.
+
+**Kombinieren** – Pro Kategorie ein Teil aus den Foto-Reihen antippen, mit Live-Vorschau. Der Vorschlags-Button würfelt nicht blind, sondern hält sich an die Regeln, die man beim Anziehen auch anwendet: entweder Kleid oder Oberteil plus Hose, Schuhe immer, Jacke je nach Saison. Teile, die farblich mit der aktuellen Auswahl kollidieren, werden abgeblendet; Hinweise melden fehlende Schuhe oder zu viele kräftige Farben.
+
+**Outfits** – Zusammenstellungen speichern, bearbeiten, favorisieren und mit „Heute getragen" vermerken. Das zählt auch alle enthaltenen Einzelteile mit.
+
+**Übersicht** – Wie viele Teile pro Kategorie, Farbe und Saison, was am häufigsten getragen wird und – oft der interessanteste Teil – welche Teile noch nie an waren.
+
+**Backup** – Über das Zahnrad oben rechts lassen sich alle Daten inklusive Fotos als JSON-Datei sichern und wieder einlesen, etwa beim Gerätewechsel.
 
 ## Auf dem iPhone installieren
 
@@ -26,6 +32,24 @@ python3 -m http.server 8000
 
 Dann im Browser `http://localhost:8000` öffnen.
 
-## Daten
+## Wo die Daten liegen
 
-Alle Kleidungsstücke und Outfits werden lokal im Browser gespeichert (`localStorage`). Es gibt keinen Server und keine Cloud-Synchronisierung — die Daten bleiben auf dem jeweiligen Gerät/Browser.
+Alles wird lokal im Browser gespeichert (IndexedDB), es gibt keinen Server und keine Cloud. Damit gilt:
+
+- Die Daten gehören zu **einem** Gerät und Browser. Für den Umzug auf ein anderes Gerät ist der Export gedacht.
+- Fotos werden beim Hinzufügen automatisch auf max. 900 px verkleinert und als JPEG gespeichert, damit auch mehrere hundert Teile handhabbar bleiben.
+- Die App fordert beim Start dauerhaften Speicher an, damit iOS die Daten nicht nach längerer Nichtnutzung verwirft. Ein regelmäßiger Export bleibt trotzdem die einzige echte Sicherung.
+- Löscht man die Website-Daten in den Safari-Einstellungen, ist der Schrank weg.
+
+## Aufbau
+
+Kein Framework, kein Build-Schritt – die Dateien werden direkt so ausgeliefert:
+
+| Datei | Zweck |
+| --- | --- |
+| `index.html` | Struktur der vier Tabs und der Dialoge |
+| `style.css` | Styling, mobil zuerst, inklusive iPhone-Safe-Areas |
+| `js/store.js` | IndexedDB-Zugriff, Migration alter Daten, Export/Import |
+| `js/images.js` | Verkleinern und Drehen der Fotos vor dem Speichern |
+| `js/app.js` | Oberfläche, Kombinationsregeln, Auswertung |
+| `sw.js` | Service Worker für den Offline-Betrieb |
