@@ -118,6 +118,13 @@ dateien['gameover'] = mische(
     rendere(glocke(329.63, 0.7), 1.0, amplitude=0.3, decay=2.8, attack=0.18),
 )
 
+# Abgewiesen: Die Spalte ist voll. Zwei dumpfe, tiefe Schläge — wie gegen
+# eine Wand klopfen. Kein Fehlerton mit Alarmcharakter, nur ein klares Nein.
+dateien['blocked'] = mische(
+    rendere([(150.0, 1.0), (300.0, 0.18)], 0.2, amplitude=0.3, decay=16.0),
+    [0.0] * int(SR * 0.075) + rendere([(118.0, 1.0), (236.0, 0.15)], 0.16, amplitude=0.26, decay=18.0),
+)
+
 # Knopfdruck: sehr kurz und leise, reine Bestätigung.
 dateien['tap'] = rendere(
     [(880.0, 1.0), (1760.0, 0.22)],

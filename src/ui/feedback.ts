@@ -35,6 +35,16 @@ export function prisma(): void {
   sound.playPrisma();
 }
 
+/**
+ * Zug abgewiesen. Früher verpuffte ein Tipp auf eine volle Spalte einfach —
+ * der Spieler konnte nicht unterscheiden, ob das Spiel hängt oder die Spalte
+ * voll ist. Jede Eingabe verdient eine Antwort.
+ */
+export function reject(): void {
+  haptics.tapReject();
+  sound.playBlocked();
+}
+
 /** Partie beendet. */
 export function gameOver(): void {
   haptics.tapGameOver();

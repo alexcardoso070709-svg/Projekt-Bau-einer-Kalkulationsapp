@@ -20,7 +20,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { puzzleNumber } from '../../game/daily';
-import { Level, Mode } from '../../game/types';
+import { GameState, Level, Mode } from '../../game/types';
 import { numberLocale, strings } from '../../i18n/strings';
 import { DailyResult, Stats } from '../../storage/store';
 import { formatNumber } from '../../game/share';
@@ -28,6 +28,8 @@ import * as feedback from '../feedback';
 import { FONT, Palette, RADIUS, SPACING, STONES } from '../theme';
 import { Backdrop } from '../components/Backdrop';
 import { Button } from '../components/Button';
+import { Icon } from '../components/Icon';
+import { useCountdown } from './ResultSheet';
 import { Stone } from '../components/Stone';
 
 /**
@@ -78,6 +80,8 @@ export interface HomeScreenProps {
   dark: boolean;
   stats: Stats;
   heuteGespielt: DailyResult | null;
+  /** Laufendes, noch nicht beendetes Tagesrätsel. */
+  tagesStand: GameState | null;
   hatGespeichertesSpiel: boolean;
   showShapes: boolean;
   onStart: (mode: Mode) => void;
@@ -92,6 +96,7 @@ export function HomeScreen({
   dark,
   stats,
   heuteGespielt,
+  tagesStand,
   hatGespeichertesSpiel,
   showShapes,
   onStart,
@@ -102,6 +107,7 @@ export function HomeScreen({
 }: HomeScreenProps) {
   const insets = useSafeAreaInsets();
   const nummer = puzzleNumber();
+  const countdown = useCountdown(heuteGespielt !== null);
 
   return (
     <View style={[styles.root, { backgroundColor: palette.bg }]}>
@@ -172,8 +178,23 @@ export function HomeScreen({
 
             {heuteGespielt ? (
               <View style={styles.dailyDone}>
+                <Icon name="check" size={15} color="#FFFFFF" strokeWidth={2.8} />
                 <Text style={styles.dailyDoneText}>
-                  ✓ {strings.todayDone} · {formatNumber(heuteGespielt.score, numberLocale)}
+                  {formatNumber(heuteGespielt.score, numberLocale)} · {strings.nextIn} {countdown}
+                </Text>
+              </View>
+            ) : tagesStand && tagesStand.moveLimit !== null ? (
+              <View style={styles.dailyDone}>
+                <View style={styles.dailyProgress}>
+                  <View
+                    style={[
+                      styles.dailyProgressFill,
+                      { width: `${(tagesStand.moves / tagesStand.moveLimit) * 100}%` },
+                    ]}
+                  />
+                </View>
+                <Text style={styles.dailyDoneText}>
+                  {strings.resume} · {tagesStand.moveLimit - tagesStand.moves} {strings.movesLeft}
                 </Text>
               </View>
             ) : null}
@@ -283,11 +304,22 @@ const styles = StyleSheet.create({
   streakValue: { color: '#FFFFFF', fontSize: 20, fontFamily: FONT.extraBold },
   streakLabel: { color: 'rgba(255,255,255,0.8)', fontSize: 10, fontFamily: FONT.semiBold },
   dailyDone: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
     marginTop: SPACING.md,
-    paddingTop: SPACING.sm,
+    paddingTop: SPACING.sm + 2,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.22)',
   },
+  dailyProgress: {
+    width: 44,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.28)',
+    overflow: 'hidden',
+  },
+  dailyProgressFill: { height: 4, borderRadius: 2, backgroundColor: '#FFFFFF' },
   dailyDoneText: { color: '#FFFFFF', fontSize: 13, fontFamily: FONT.semiBold },
   links: {
     flexDirection: 'row',

@@ -1,104 +1,157 @@
 /**
  * Das Ergebnis nach einer Partie.
  *
- * Wirtschaftlich ist das der wichtigste Bildschirm der App. Ohne Werbebudget
- * wächst ein Spiel nur, wenn Menschen von sich aus davon erzählen — und der
- * Moment, in dem jemand das tun würde, ist genau hier: direkt nachdem etwas
- * Bemerkenswertes passiert ist. Deshalb steht der Teilen-Knopf an erster
- * Stelle und nicht versteckt hinter einem Menü, und deshalb ist das geteilte
- * Ergebnis ein Emoji-Bild statt einer nackten Zahl: Es verrät nichts über die
- * Lösung, macht aber neugierig.
+ * Wirtschaftlich der wichtigste Bildschirm: Ohne Werbebudget wächst ein
+ * Spiel nur, wenn Menschen von sich aus davon erzählen, und der Moment dafür
+ * ist genau hier. Deshalb steht Teilen an erster Stelle, und deshalb ist der
+ * Bildschirm selbst eine kleine Inszenierung: Die Punkte zählen hoch, das
+ * Endfeld erscheint aus echten Steinen, und ein neuer Bestwert wird gefeiert.
+ * Das geteilte Ergebnis bleibt ein Emoji-Raster — das ist, was in einer
+ * Nachricht funktioniert. Auf dem eigenen Bildschirm verdient es mehr.
  */
 import React, { useEffect, useMemo, useState } from 'react';
-import { Pressable, Share, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import { Platform, Share, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import Animated, { FadeIn, FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { msUntilNextPuzzle } from '../../game/daily';
-import { boardToEmoji, buildShareText, formatNumber } from '../../game/share';
-import { GameState } from '../../game/types';
+import { buildShareText, formatNumber } from '../../game/share';
+import { Board, GameState, Level } from '../../game/types';
 import { numberLocale, strings } from '../../i18n/strings';
-import { Stats } from '../../storage/store';
-import * as haptics from '../haptics';
+import { Stats } from '../../storage/stats';
+import * as feedback from '../feedback';
 import { FONT, Palette, RADIUS, SPACING, TABULAR } from '../theme';
 import { Button } from '../components/Button';
+import { Counter } from '../components/Counter';
+import { Confetti } from '../components/Effects';
+import { Icon } from '../components/Icon';
+import { Stone } from '../components/Stone';
 
 export interface ResultSheetProps {
   game: GameState;
   stats: Stats;
   palette: Palette;
-  onAgain: () => void;
+  /** Ein schon früher abgeschlossenes Tagesrätsel, erneut angezeigt. */
+  archived?: boolean;
+  onAgain?: () => void;
   onHome: () => void;
 }
 
 /** Restzeit bis Mitternacht als hh:mm:ss. */
-function useCountdown(active: boolean): string {
+export function useCountdown(active: boolean): string {
   const [rest, setRest] = useState(() => msUntilNextPuzzle());
-
   useEffect(() => {
     if (!active) return;
     const id = setInterval(() => setRest(msUntilNextPuzzle()), 1000);
     return () => clearInterval(id);
   }, [active]);
-
   const s = Math.max(0, Math.floor(rest / 1000));
-  const hh = String(Math.floor(s / 3600)).padStart(2, '0');
-  const mm = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
-  const ss = String(s % 60).padStart(2, '0');
-  return `${hh}:${mm}:${ss}`;
+  const zwei = (n: number) => String(n).padStart(2, '0');
+  return `${zwei(Math.floor(s / 3600))}:${zwei(Math.floor((s % 3600) / 60))}:${zwei(s % 60)}`;
 }
 
-export function ResultSheet({ game, stats, palette, onAgain, onHome }: ResultSheetProps) {
+/** Endfeld aus echten Steinen, leere Zeilen oben abgeschnitten. */
+function MiniBoard({ board, palette, size }: { board: Board; palette: Palette; size: number }) {
+  const erste = board.findIndex((row) => row.some((c) => c !== 0));
+  if (erste === -1) return null;
+  const gap = Math.max(2, Math.round(size * 0.14));
+  return (
+    <View style={{ gap }}>
+      {board.slice(erste).map((row, r) => (
+        <View key={r} style={{ flexDirection: 'row', gap }}>
+          {row.map((cell, c) =>
+            cell === 0 ? (
+              <View
+                key={c}
+                style={{ width: size, height: size, borderRadius: size * 0.28, backgroundColor: palette.cellEmpty }}
+              />
+            ) : (
+              <Animated.View key={c} testID="result-stone" entering={FadeIn.delay(260 + (r * 5 + c) * 18).duration(260)}>
+                <Stone level={cell as Level} size={size} glow={false} />
+              </Animated.View>
+            ),
+          )}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+export function ResultSheet({ game, stats, palette, archived = false, onAgain, onHome }: ResultSheetProps) {
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const reduced = useReducedMotion();
   const istTagesraetsel = game.mode === 'daily';
   const countdown = useCountdown(istTagesraetsel);
-  const [geteilt, setGeteilt] = useState(false);
+  const [kopiert, setKopiert] = useState(false);
+  const [punkte, setPunkte] = useState(0);
+  const [sheetHoehe, setSheetHoehe] = useState(600);
 
-  const grid = useMemo(() => boardToEmoji(game.board), [game.board]);
   const bestwert = stats.bestScore[game.mode] ?? 0;
-  const istRekord = game.score > 0 && game.score >= bestwert;
+  const istRekord = !archived && game.score > 0 && game.score >= bestwert;
+
+  // Die Punkte zählen erst hoch, wenn das Fenster steht — sonst verpasst man es.
+  useEffect(() => {
+    const t = setTimeout(() => setPunkte(game.score), 280);
+    return () => clearTimeout(t);
+  }, [game.score]);
+
+  const steinGroesse = useMemo(() => Math.min(22, Math.floor((Math.min(width, 440) - 160) / 5)), [width]);
 
   const teilen = async () => {
-    haptics.tapButton();
+    feedback.button();
     const text = buildShareText(game, { locale: numberLocale });
     try {
-      await Share.share({ message: text });
-      setGeteilt(true);
+      if (Platform.OS !== 'web') {
+        await Share.share({ message: text });
+        return;
+      }
+      // Im Browser gibt es nicht überall ein Teilen-Menü (etwa am Desktop oder
+      // in eingebetteten Seiten). Dann landet das Ergebnis in der
+      // Zwischenablage — ein Knopf ohne Wirkung wäre schlimmer als keiner.
+      const nav = typeof navigator !== 'undefined' ? (navigator as Navigator & { share?: (d: object) => Promise<void> }) : null;
+      if (nav?.share) {
+        try {
+          await nav.share({ text });
+          return;
+        } catch (e) {
+          if ((e as Error)?.name === 'AbortError') return;
+        }
+      }
+      await nav?.clipboard?.writeText(text);
+      setKopiert(true);
     } catch {
-      // Abgebrochenes Teilen ist kein Fehler — einfach nichts tun.
+      // Abgebrochenes Teilen ist kein Fehler.
     }
   };
 
   return (
     <View style={[styles.root, { backgroundColor: palette.overlay }]}>
       <Animated.View
-        entering={FadeInDown.duration(320).springify().damping(18)}
+        testID="result-sheet"
+        entering={FadeInDown.duration(340).springify().damping(18)}
+        onLayout={(e) => setSheetHoehe(e.nativeEvent.layout.height)}
         style={[
           styles.sheet,
-          {
-            backgroundColor: palette.bgElevated,
-            borderColor: palette.border,
-            paddingBottom: insets.bottom + SPACING.lg,
-          },
+          { backgroundColor: palette.bgElevated, borderColor: palette.border, paddingBottom: insets.bottom + SPACING.lg },
         ]}
       >
+        {istRekord && !reduced ? <Confetti width={Math.min(width, 520)} height={sheetHoehe} /> : null}
+
         <Text style={[styles.kicker, { color: palette.textMuted }]}>
-          {istTagesraetsel
-            ? `${strings.dailyDone} · #${game.puzzleNumber}`
-            : strings.gameOver}
+          {istTagesraetsel ? `${strings.dailyDone} · #${game.puzzleNumber}` : strings.gameOver}
         </Text>
 
-        <Animated.View entering={FadeIn.delay(120).duration(400)}>
-          <Text style={[styles.score, { color: palette.text }]}>
-            {formatNumber(game.score, numberLocale)}
-          </Text>
-        </Animated.View>
+        <Counter
+          testID="result-score"
+          value={punkte}
+          duration={1100}
+          style={[styles.score, { color: palette.text }]}
+        />
 
         {istRekord ? (
-          <Animated.View
-            entering={FadeIn.delay(280)}
-            style={[styles.record, { backgroundColor: palette.accent }]}
-          >
-            <Text style={styles.recordText}>★ {strings.best}</Text>
+          <Animated.View entering={FadeIn.delay(1250)} style={[styles.record, { backgroundColor: palette.accent }]}>
+            <Icon name="star" size={14} color="#FFFFFF" />
+            <Text style={styles.recordText}>{strings.best}</Text>
           </Animated.View>
         ) : (
           <Text style={[styles.previousBest, { color: palette.textFaint }]}>
@@ -106,24 +159,20 @@ export function ResultSheet({ game, stats, palette, onAgain, onHome }: ResultShe
           </Text>
         )}
 
-        {grid ? (
-          <Animated.View
-            entering={FadeIn.delay(200).duration(420)}
-            style={[styles.gridBox, { backgroundColor: palette.bg }]}
-          >
-            <Text style={styles.grid} allowFontScaling={false}>
-              {grid}
-            </Text>
-          </Animated.View>
+        {game.board.length ? (
+          <View style={[styles.boardBox, { backgroundColor: palette.bg, borderColor: palette.border }]}>
+            <MiniBoard board={game.board} palette={palette} size={steinGroesse} />
+          </View>
         ) : null}
 
         <View style={styles.row}>
-          <Kennzahl label={strings.chain} value={`×${game.bestChain}`} palette={palette} />
-          <Kennzahl label={strings.prismas} value={`${game.prismas}`} palette={palette} />
-          <Kennzahl label={strings.moves} value={`${game.moves}`} palette={palette} />
+          <Kennzahl icon="chain" value={`×${game.bestChain}`} label={strings.bestChain} palette={palette} />
+          <Kennzahl icon="prisma" value={`${game.prismas}`} label={strings.prismas} palette={palette} />
           {istTagesraetsel ? (
-            <Kennzahl label={strings.streak} value={`${stats.streak}`} palette={palette} />
-          ) : null}
+            <Kennzahl icon="star" value={`${stats.streak}`} label={strings.streak} palette={palette} />
+          ) : (
+            <Kennzahl value={`${game.moves}`} label={strings.moves} palette={palette} />
+          )}
         </View>
 
         {istTagesraetsel ? (
@@ -133,29 +182,12 @@ export function ResultSheet({ game, stats, palette, onAgain, onHome }: ResultShe
         ) : null}
 
         <View style={styles.actions}>
-          <Button
-            label={geteilt ? strings.shared : strings.share}
-            palette={palette}
-            onPress={teilen}
-            block
-          />
+          <Button label={kopiert ? strings.shared : strings.share} palette={palette} onPress={teilen} block />
           <View style={styles.actionRow}>
-            {istTagesraetsel ? null : (
-              <Button
-                label={strings.again}
-                palette={palette}
-                variant="secondary"
-                onPress={onAgain}
-                style={styles.flex}
-              />
+            {istTagesraetsel || !onAgain ? null : (
+              <Button label={strings.again} palette={palette} variant="secondary" onPress={onAgain} style={styles.flex} />
             )}
-            <Button
-              label={strings.home}
-              palette={palette}
-              variant="secondary"
-              onPress={onHome}
-              style={styles.flex}
-            />
+            <Button label={strings.home} palette={palette} variant="secondary" onPress={onHome} style={styles.flex} />
           </View>
         </View>
       </Animated.View>
@@ -164,31 +196,29 @@ export function ResultSheet({ game, stats, palette, onAgain, onHome }: ResultShe
 }
 
 function Kennzahl({
-  label,
+  icon,
   value,
+  label,
   palette,
 }: {
-  label: string;
+  icon?: 'chain' | 'prisma' | 'star';
   value: string;
+  label: string;
   palette: Palette;
 }) {
   return (
     <View style={styles.kennzahl}>
-      <Text style={[styles.kennzahlValue, { color: palette.text }]}>{value}</Text>
+      <View style={styles.kennzahlTop}>
+        {icon ? <Icon name={icon} size={15} color={palette.textMuted} inner={palette.bgElevated} /> : null}
+        <Text style={[styles.kennzahlValue, { color: palette.text }]}>{value}</Text>
+      </View>
       <Text style={[styles.kennzahlLabel, { color: palette.textFaint }]}>{label}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'flex-end',
-  },
+  root: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'flex-end' },
   sheet: {
     borderTopLeftRadius: RADIUS.lg + 10,
     borderTopRightRadius: RADIUS.lg + 10,
@@ -196,34 +226,28 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.lg,
     paddingHorizontal: SPACING.lg,
     alignItems: 'center',
+    overflow: 'hidden',
   },
   kicker: { fontSize: 13, fontFamily: FONT.semiBold, letterSpacing: 0.6 },
-  score: { fontSize: 56, fontFamily: FONT.extraBold, letterSpacing: -1.5, marginTop: SPACING.xs, ...TABULAR },
+  score: { fontSize: 58, fontFamily: FONT.extraBold, letterSpacing: -1.5, marginTop: SPACING.xs, ...TABULAR },
   record: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
     paddingHorizontal: SPACING.md,
     paddingVertical: 5,
     borderRadius: RADIUS.pill,
     marginTop: SPACING.xs,
   },
   recordText: { color: '#FFFFFF', fontFamily: FONT.bold, fontSize: 13, letterSpacing: 0.4 },
-  previousBest: { fontSize: 13, fontFamily: FONT.semiBold, marginTop: SPACING.xs },
-  gridBox: {
-    marginTop: SPACING.md,
-    paddingVertical: SPACING.sm + 2,
-    paddingHorizontal: SPACING.md,
-    borderRadius: RADIUS.md,
-  },
-  grid: { fontSize: 15, lineHeight: 19, letterSpacing: 1, textAlign: 'center' },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: SPACING.xl,
-    marginTop: SPACING.md,
-  },
+  previousBest: { fontSize: 13, fontFamily: FONT.semiBold, marginTop: SPACING.xs, ...TABULAR },
+  boardBox: { marginTop: SPACING.md, padding: SPACING.md - 4, borderRadius: RADIUS.md, borderWidth: 1 },
+  row: { flexDirection: 'row', justifyContent: 'center', gap: SPACING.xl, marginTop: SPACING.md },
   kennzahl: { alignItems: 'center' },
-  kennzahlValue: { fontSize: 20, fontFamily: FONT.bold },
+  kennzahlTop: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  kennzahlValue: { fontSize: 20, fontFamily: FONT.bold, ...TABULAR },
   kennzahlLabel: { fontSize: 11, fontFamily: FONT.semiBold, letterSpacing: 0.4, marginTop: 1 },
-  countdown: { fontSize: 13, fontFamily: FONT.semiBold, marginTop: SPACING.md },
+  countdown: { fontSize: 13, fontFamily: FONT.semiBold, marginTop: SPACING.md, ...TABULAR },
   actions: { width: '100%', marginTop: SPACING.lg, gap: SPACING.sm },
   actionRow: { flexDirection: 'row', gap: SPACING.sm },
   flex: { flex: 1 },

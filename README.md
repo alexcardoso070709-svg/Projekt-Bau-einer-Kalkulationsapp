@@ -16,6 +16,18 @@ Steine nachrutschen, das löst Ketten aus, und Ketten sind der Punktemotor.
 
 Kein einziges Wort davon steht im Spiel. Farbe und Form erklären alles.
 
+### So fühlt es sich an
+
+- **Zielen statt raten.** Finger aufsetzen zeigt, wo der Stein landen würde;
+  verschieben wechselt die Spalte, loslassen wirft. Ein schneller Tipp
+  funktioniert trotzdem wie ein Knopfdruck.
+- **Nichts wird verschluckt.** Wer während einer Kette schon weiterspielt,
+  wird vorgemerkt (bis zu drei Züge), und die laufende Animation beschleunigt.
+- **Jede Eingabe hat eine Antwort.** Eine volle Spalte weist sichtbar, hörbar
+  und fühlbar ab. Fast volle Spalten glimmen rot an ihrer Oberkante.
+- **Wortloses Tutorial.** Beim ersten Start zeigt das Spiel sich selbst in
+  drei Zügen: Verschmelzen, Kette, Prisma.
+
 ### Drei Modi
 
 | Modus | Was es ist |
@@ -94,7 +106,7 @@ schlagen an, wenn eine spätere Änderung die Balance kippt.
 npm install
 npm start          # Expo starten, dann QR-Code mit Expo Go scannen
 npm run web        # im Browser
-npm test           # 70 Tests, unter 2 Sekunden
+npm test           # 87 Tests, unter 2 Sekunden
 npm run typecheck
 ```
 
@@ -118,6 +130,31 @@ src/i18n/      Texte (DE/EN)
 Die Trennung ist bewusst: Die Engine ist frei von React und Plattform-APIs. Sie
 läuft in Node, ist in Millisekunden testbar, und dieselbe Logik erzeugt auf
 jedem Gerät der Welt bitgenau dasselbe Tagesrätsel.
+
+---
+
+## Premium-Checkliste
+
+Zwölf Ziele, die ein automatischer Browser-Test gegen den echten Build prüft
+(`scripts/premium-audit.js`, Aufruf steht im Dateikopf). Ausgangsstand vor der
+Überarbeitung: 1 von 12. Heute: **12 von 12**, ohne Konsolenfehler.
+
+| # | Ziel | Gemessen |
+|---|---|---|
+| 1 | Kein Fehlwurf | Vorschau erscheint beim Halten, folgt dem Finger |
+| 2 | Keine Eingabe geht verloren | Drei schnelle Züge zählen alle |
+| 3 | Jede Eingabe hat Rückmeldung | Volle Spalte weist sichtbar ab |
+| 4 | Flüssig | Keine Blockade des Hauptthreads über 50 ms in 30 Zügen |
+| 5 | Ohne ein Wort verstanden | Tutorial ohne Buchstaben, durchspielbar, nur einmal |
+| 6 | Tagesrätsel unbestechlich | Abbrechen setzt fort, Erledigtes zeigt das Ergebnis |
+| 7 | Weiche Übergänge | Einblendung über mehrere Bilder statt Schnitt |
+| 8 | Ergebnis als Höhepunkt | Echte Steine, hochzählende Punkte, Rekordfeier |
+| 9 | Spannung sichtbar | Fast volle Spalte warnt, leere nicht |
+| 10 | Echte Symbole | Keine Ersatzzeichen wie ‹ ✕ ★ im Bild |
+| 11 | Barrierefrei | „Bewegung reduzieren" respektiert, Vorlesetexte übersetzt |
+| 12 | Teilen überall | Ohne Teilen-Menü landet das Ergebnis in der Zwischenablage |
+
+Wer das Spiel ändert, lässt den Prüfstand danach erneut laufen.
 
 ---
 
@@ -264,9 +301,11 @@ erkennt die Steine an Kreis, Ring, Quadrat, Raute und Stern.
 
 Was geprüft ist:
 
-- 70 automatisierte Tests, darunter Wächter für die Spielbalance
-- Die Web-Fassung startet fehlerfrei und ist durchgespielt worden
+- 87 automatisierte Tests, darunter Wächter für die Spielbalance, die
+  Serienzählung und die Eindeutigkeit jedes Tutorial-Schritts
+- Die Premium-Checkliste besteht vollständig im Browser
 - Das Tagesrätsel erzeugt nachweislich auf jedem Gerät dieselbe Steinfolge
+  und lässt sich weder neu starten noch nachträglich verbessern
 
 Was noch aussteht:
 

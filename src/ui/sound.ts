@@ -31,6 +31,7 @@ const QUELLEN = {
   prisma: require('../../assets/sounds/prisma.wav'),
   gameover: require('../../assets/sounds/gameover.wav'),
   tap: require('../../assets/sounds/tap.wav'),
+  blocked: require('../../assets/sounds/blocked.wav'),
 } as const;
 
 type Klang = keyof typeof QUELLEN;
@@ -108,6 +109,9 @@ export const playGameOver = () => spiele('gameover');
 
 /** Knopfdruck in Menüs. */
 export const playTap = () => spiele('tap');
+
+/** Zug abgewiesen, weil die Spalte voll ist. */
+export const playBlocked = () => spiele('blocked');
 
 /** Beim Beenden aufräumen. */
 export function releaseSound(): void {

@@ -17,6 +17,7 @@ import { Settings, Stats, ThemeChoice } from '../../storage/store';
 import * as feedback from '../feedback';
 import { FONT, Palette, RADIUS, SPACING, STONES } from '../theme';
 import { Button } from '../components/Button';
+import { Icon } from '../components/Icon';
 import { Stone } from '../components/Stone';
 
 interface SheetProps {
@@ -45,7 +46,7 @@ function Sheet({ palette, onClose, children, title }: SheetProps) {
         <View style={styles.sheetHeader}>
           <Text style={[styles.sheetTitle, { color: palette.text }]}>{title}</Text>
           <Pressable onPress={onClose} hitSlop={12} accessibilityRole="button">
-            <Text style={[styles.close, { color: palette.textMuted }]}>✕</Text>
+            <Icon name="close" size={22} color={palette.textMuted} />
           </Pressable>
         </View>
         <ScrollView showsVerticalScrollIndicator={false}>{children}</ScrollView>
@@ -272,10 +273,13 @@ export function HowToSheet({
   palette,
   showShapes,
   onClose,
+  onTry,
 }: {
   palette: Palette;
   showShapes: boolean;
   onClose: () => void;
+  /** Startet das wortlose Tutorial erneut. */
+  onTry: () => void;
 }) {
   const regeln = [strings.rule1, strings.rule2, strings.rule3, strings.rule4];
 
@@ -288,17 +292,17 @@ export function HowToSheet({
           <React.Fragment key={l}>
             <Stone level={l} size={34} showShape={showShapes} />
             {i < 4 ? (
-              <Text style={[styles.pfeil, { color: palette.textFaint }]}>›</Text>
+              <Icon name="next" size={14} color={palette.textFaint} strokeWidth={2.6} />
             ) : (
               <>
-                <Text style={[styles.pfeil, { color: palette.textFaint }]}>›</Text>
+                <Icon name="next" size={14} color={palette.textFaint} strokeWidth={2.6} />
                 <LinearGradient
                   colors={['#FFFFFF', '#CDE7FF', '#9FD0FF']}
                   start={{ x: 0.2, y: 0 }}
                   end={{ x: 0.8, y: 1 }}
                   style={styles.prismaChip}
                 >
-                  <Text style={styles.prismaChipText}>◈</Text>
+                  <Icon name="prisma" size={20} color="#12457F" inner="#CDE7FF" />
                 </LinearGradient>
               </>
             )}
@@ -318,7 +322,8 @@ export function HowToSheet({
       ))}
 
       <View style={styles.abschluss}>
-        <Button label={strings.close} palette={palette} onPress={onClose} block />
+        <Button label={strings.tryIt} palette={palette} onPress={onTry} block />
+        <Button label={strings.close} palette={palette} variant="secondary" onPress={onClose} block />
       </View>
     </Sheet>
   );
@@ -419,5 +424,5 @@ const styles = StyleSheet.create({
   },
   regelNummerText: { fontSize: 13, fontFamily: FONT.bold },
   regelText: { flex: 1, fontSize: 15, lineHeight: 22 },
-  abschluss: { paddingTop: SPACING.sm, paddingBottom: SPACING.md },
+  abschluss: { paddingTop: SPACING.sm, paddingBottom: SPACING.md, gap: SPACING.sm },
 });

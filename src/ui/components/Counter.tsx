@@ -11,12 +11,13 @@ import { numberLocale } from '../../i18n/strings';
 
 export interface CounterProps {
   value: number;
+  testID?: string;
   style?: TextStyle | TextStyle[];
   duration?: number;
   locale?: string;
 }
 
-export function Counter({ value, style, duration = 420, locale = numberLocale }: CounterProps) {
+export function Counter({ value, testID, style, duration = 420, locale = numberLocale }: CounterProps) {
   const [shown, setShown] = useState(value);
   const from = useRef(value);
   const raf = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -50,5 +51,9 @@ export function Counter({ value, style, duration = 420, locale = numberLocale }:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, duration]);
 
-  return <Text style={style}>{formatNumber(shown, locale)}</Text>;
+  return (
+    <Text testID={testID} style={style}>
+      {formatNumber(shown, locale)}
+    </Text>
+  );
 }

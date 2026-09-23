@@ -43,6 +43,10 @@ export const tapMerge = (chain: number) =>
 export const tapPrisma = () =>
   safe(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success));
 
+/** Abgewiesen: kurzer, harter Impuls — fühlt sich an wie ein Anschlag. */
+export const tapReject = () =>
+  safe(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid));
+
 /** Spielende. */
 export const tapGameOver = () =>
   safe(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning));

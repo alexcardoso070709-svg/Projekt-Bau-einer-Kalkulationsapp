@@ -307,3 +307,93 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 });
+
+/* ── Konfetti ──────────────────────────────────────────────────── */
+
+const KONFETTI_FARBEN = ['#FF4D6A', '#FF9038', '#FFD23F', '#3ED598', '#4D9BFF', '#FFFFFF'];
+
+function Schnipsel({
+  x,
+  breite,
+  hoehe,
+  farbe,
+  verzoegerung,
+  drift,
+  dreh,
+  fall,
+}: {
+  x: number;
+  breite: number;
+  hoehe: number;
+  farbe: string;
+  verzoegerung: number;
+  drift: number;
+  dreh: number;
+  fall: number;
+}) {
+  const p = useSharedValue(0);
+
+  React.useEffect(() => {
+    p.value = withDelay(
+      verzoegerung,
+      withTiming(1, { duration: 1700 + Math.random() * 600, easing: Easing.out(Easing.quad) }),
+    );
+  }, [p, verzoegerung]);
+
+  const style = useAnimatedStyle(() => ({
+    opacity: p.value < 0.75 ? 1 : 1 - (p.value - 0.75) / 0.25,
+    transform: [
+      { translateX: drift * p.value + Math.sin(p.value * 9) * 6 },
+      { translateY: -40 + fall * p.value },
+      { rotate: `${dreh * p.value}deg` },
+      { scaleX: 0.4 + Math.abs(Math.cos(p.value * 12)) * 0.6 },
+    ],
+  }));
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        { position: 'absolute', top: 0, left: x, width: breite, height: hoehe, borderRadius: 2, backgroundColor: farbe },
+        style,
+      ]}
+    />
+  );
+}
+
+/**
+ * Konfetti in den Spielfarben — nur bei einem neuen Bestwert. Würde es nach
+ * jeder Partie regnen, bedeutete es nichts mehr.
+ */
+export const Confetti = React.memo(function Confetti({
+  width,
+  height,
+  count = 34,
+}: {
+  width: number;
+  height: number;
+  count?: number;
+}) {
+  const teile = useMemo(
+    () =>
+      Array.from({ length: count }, (_, i) => ({
+        x: Math.random() * width,
+        breite: 6 + Math.random() * 5,
+        hoehe: 9 + Math.random() * 7,
+        farbe: KONFETTI_FARBEN[i % KONFETTI_FARBEN.length],
+        verzoegerung: Math.random() * 380,
+        drift: (Math.random() - 0.5) * 120,
+        dreh: (Math.random() - 0.5) * 720,
+        fall: height * (0.55 + Math.random() * 0.4),
+      })),
+    [count, width, height],
+  );
+
+  return (
+    <View testID="confetti" pointerEvents="none" style={[styles.centre, { overflow: 'hidden' }]}>
+      {teile.map((t, i) => (
+        <Schnipsel key={i} {...t} />
+      ))}
+    </View>
+  );
+});

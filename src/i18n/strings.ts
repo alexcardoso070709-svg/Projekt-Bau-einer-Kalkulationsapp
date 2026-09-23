@@ -59,6 +59,15 @@ export interface Strings {
   offlineNote: string;
   puzzleLabel: string;
   todayDone: string;
+  column: string;
+  free: string;
+  top: string;
+  empty: string;
+  colours: [string, string, string, string, string];
+  tryIt: string;
+  skip: string;
+  nextIn: string;
+  resultTitle: string;
 }
 
 const de: Strings = {
@@ -112,6 +121,15 @@ const de: Strings = {
   offlineNote: 'Alles bleibt auf deinem Gerät. Kein Konto, keine Werbung, kein Internet nötig.',
   puzzleLabel: 'Rätsel',
   todayDone: 'Für heute erledigt',
+  column: 'Spalte',
+  free: 'frei',
+  top: 'oben',
+  empty: 'leer',
+  colours: ['Rot', 'Orange', 'Gelb', 'Grün', 'Blau'],
+  tryIt: 'Interaktiv ausprobieren',
+  skip: 'Überspringen',
+  nextIn: 'Neu in',
+  resultTitle: 'Ergebnis',
 };
 
 const en: Strings = {
@@ -165,6 +183,15 @@ const en: Strings = {
   offlineNote: 'Everything stays on your device. No account, no ads, no internet needed.',
   puzzleLabel: 'Puzzle',
   todayDone: 'Done for today',
+  column: 'Column',
+  free: 'free',
+  top: 'top',
+  empty: 'empty',
+  colours: ['Red', 'Orange', 'Yellow', 'Green', 'Blue'],
+  tryIt: 'Try it interactively',
+  skip: 'Skip',
+  nextIn: 'New in',
+  resultTitle: 'Result',
 };
 
 function deviceLocale(): string {
