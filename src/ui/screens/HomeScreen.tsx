@@ -138,7 +138,7 @@ export function HomeScreen({
           <Animated.View key={modus} entering={FadeInDown.delay(100).duration(380)} style={styles.full}>
             <Button
               label={strings.resume}
-              sublabel={modus === 'zen' ? strings.zen : strings.endless}
+              sublabel={modus === 'zen' ? strings.zen : modus === 'tempo' ? strings.tempo : strings.endless}
               palette={palette}
               variant="secondary"
               onPress={() => onResume(modus)}
@@ -212,6 +212,17 @@ export function HomeScreen({
             palette={palette}
             variant="secondary"
             onPress={() => onStart('endless')}
+            block
+          />
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(225).duration(400)} style={styles.full}>
+          <Button
+            label={strings.tempo}
+            sublabel={strings.tempoSub}
+            palette={palette}
+            variant="secondary"
+            onPress={() => onStart('tempo')}
             block
           />
         </Animated.View>

@@ -50,7 +50,7 @@ export interface Settings {
 export const DEFAULT_STATS: Stats = {
   played: 0,
   totalScore: 0,
-  bestScore: { daily: 0, endless: 0, zen: 0 },
+  bestScore: { daily: 0, endless: 0, zen: 0, tempo: 0 },
   bestChain: 0,
   prismas: 0,
   streak: 0,

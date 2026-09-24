@@ -24,6 +24,7 @@ const KEY_SAVE: Record<Mode, string> = {
   endless: 'prisma.save.v1',
   zen: 'prisma.save.zen.v1',
   daily: 'prisma.save.daily.v1',
+  tempo: 'prisma.save.tempo.v1',
 };
 
 export type SavedGames = Record<Mode, GameState | null>;
@@ -79,7 +80,7 @@ export async function loadSavedGames(): Promise<SavedGames> {
   // 1. Entscheiden: je Modus die beste gültige Partie, egal wo sie lag.
   //    Liegen zwei vor (alte gemeinsame Ablage und eigener Platz), gewinnt
   //    die mit mehr Fortschritt — eine bewusste Wahl statt Zufall der Reihenfolge.
-  const result: SavedGames = { daily: null, endless: null, zen: null };
+  const result: SavedGames = { daily: null, endless: null, zen: null, tempo: null };
   // Partien am eigenen Platz zuerst: Bei Gleichstand bleibt die richtig
   // einsortierte, nicht die aus der alten Ablage.
   const reihenfolge = gelesen

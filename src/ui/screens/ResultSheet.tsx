@@ -16,6 +16,7 @@ import Animated, { FadeIn, FadeInDown, useReducedMotion } from 'react-native-rea
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { STORE_URL } from '../../brand';
 import { puzzleNumber } from '../../game/daily';
+import { timeLeftMs } from '../../game/engine';
 import { buildShareText, formatNumber } from '../../game/share';
 import { Board, GameState, Level } from '../../game/types';
 import { numberLocale, strings } from '../../i18n/strings';
@@ -93,7 +94,7 @@ export function ResultSheet({ game, stats, palette, archived = false, previousBe
     feedback.button();
     const text = buildShareText(game, {
       locale: numberLocale,
-      labels: { endless: strings.endless, zen: strings.zen },
+      labels: { endless: strings.endless, zen: strings.zen, tempo: strings.tempo },
       link: STORE_URL ?? undefined,
     });
     try {
@@ -134,7 +135,7 @@ export function ResultSheet({ game, stats, palette, archived = false, previousBe
         {istRekord && !reduced ? <Confetti width={Math.min(width, 520)} height={sheetHoehe} /> : null}
 
         <Text style={[styles.kicker, { color: palette.textMuted }]}>
-          {istTagesraetsel ? `${strings.dailyDone} · #${game.puzzleNumber}` : strings.gameOver}
+          {istTagesraetsel ? `${strings.dailyDone} · #${game.puzzleNumber}` : game.mode === 'tempo' && timeLeftMs(game) === 0 ? strings.timeUp : strings.gameOver}
         </Text>
 
         <Counter

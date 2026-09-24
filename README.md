@@ -28,12 +28,13 @@ Kein einziges Wort davon steht im Spiel. Farbe und Form erklären alles.
 - **Wortloses Tutorial.** Beim ersten Start zeigt das Spiel sich selbst in
   drei Zügen: Verschmelzen, Kette, Prisma.
 
-### Drei Modi
+### Vier Modi
 
 | Modus | Was es ist |
 |---|---|
 | **Tagesrätsel** | 90 Züge, weltweit dieselbe Steinfolge. Einmal am Tag, Ergebnis teilbar. |
 | **Endlos** | Bis nichts mehr geht. Für die Bestenjagd. |
+| **Tempo** | 60 Sekunden gegen die Uhr. Jedes Kettenglied ab dem zweiten schenkt 1 s, jedes Prisma 5 s. Die Uhr steht, sobald man die Partie verlässt. |
 | **Zen** | Kein Spielende, unbegrenzt Züge zurücknehmen, Tipp-Knopf. |
 
 ---
@@ -106,7 +107,7 @@ schlagen an, wenn eine spätere Änderung die Balance kippt.
 npm install
 npm start          # Expo starten, dann QR-Code mit Expo Go scannen
 npm run web        # im Browser
-npm test           # 102 Tests, unter 2 Sekunden
+npm test           # 109 Tests, unter 2 Sekunden
 npm run typecheck
 npm run build:web  # installierbare Offline-Web-App nach docs/spielen/ und download/Irisa.html
 ```

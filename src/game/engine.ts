@@ -78,6 +78,40 @@ function fillQueue(queue: Level[], rng: Rng, moves: number): Level[] {
   return next;
 }
 
+/**
+ * Tempo: 60 Sekunden gegen die Uhr, Züge unbegrenzt.
+ *
+ * Ohne Bonus wäre Tempo reines Schnelltippen — und schnelles Tippen füllt
+ * das Brett, statt Punkte zu bringen. Die Bonuszeit belohnt deshalb genau das,
+ * was das Spiel auch sonst belohnt: Ketten und Prismen. Wer gut spielt, spielt
+ * länger. Die Uhr läuft nur, solange die Partie offen ist.
+ */
+export const TEMPO_MS = 60_000;
+/** Bonus je Kettenglied ab dem zweiten. */
+export const TEMPO_BONUS_CHAIN_MS = 1_000;
+/** Bonus je gezündetem Prisma. */
+export const TEMPO_BONUS_PRISMA_MS = 5_000;
+
+export function tempoBonusMs(chain: number, prismas: number): number {
+  return Math.max(0, chain - 1) * TEMPO_BONUS_CHAIN_MS + prismas * TEMPO_BONUS_PRISMA_MS;
+}
+
+/** Verbleibende Zeit im Tempo-Modus, sonst null. */
+export function timeLeftMs(state: GameState): number | null {
+  if (state.mode !== 'tempo' || state.timeLimitMs == null) return null;
+  return Math.max(0, state.timeLimitMs - (state.elapsedMs ?? 0));
+}
+
+/**
+ * Lässt die Tempo-Uhr um `deltaMs` laufen. Ist die Zeit um, endet die Partie.
+ * Andere Modi und beendete Partien bleiben unverändert (gleiche Referenz).
+ */
+export function tickClock(state: GameState, deltaMs: number): GameState {
+  if (state.over || state.mode !== 'tempo' || state.timeLimitMs == null || !(deltaMs > 0)) return state;
+  const elapsedMs = Math.min(state.timeLimitMs, (state.elapsedMs ?? 0) + deltaMs);
+  return { ...state, elapsedMs, over: elapsedMs >= state.timeLimitMs };
+}
+
 export interface NewGameOptions {
   mode: Mode;
   /** Nur für das Tagesrätsel; sonst wird ein Zufalls-Seed gezogen. */
@@ -116,6 +150,7 @@ export function createGame(options: NewGameOptions): GameState {
     moves: 0,
     over: false,
     puzzleNumber: puzzle,
+    ...(mode === 'tempo' ? { timeLimitMs: TEMPO_MS, elapsedMs: 0 } : {}),
     seed,
     rngCalls: rng.calls,
   };
@@ -274,8 +309,13 @@ export function playMove(
     level,
   ) as Level;
 
+  const timeBonusMs = state.mode === 'tempo' ? tempoBonusMs(outcome.chain, outcome.prismas) : 0;
+
   const next: GameState = {
     ...state,
+    ...(state.mode === 'tempo' && state.timeLimitMs != null
+      ? { timeLimitMs: state.timeLimitMs + timeBonusMs }
+      : {}),
     board,
     queue,
     score: state.score + outcome.points,
@@ -298,6 +338,7 @@ export function playMove(
       landed: placed.landed,
       highestLevel: outcome.highestLevel,
       prismas: outcome.prismas,
+      timeBonusMs,
     },
   };
 }

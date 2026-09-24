@@ -54,7 +54,7 @@ export function formatNumber(value: number, locale = 'de-DE'): string {
 export interface ShareOptions {
   locale?: string;
   /** Übersetzte Modusnamen; ohne Angabe Deutsch. */
-  labels?: { endless: string; zen: string };
+  labels?: { endless: string; zen: string; tempo?: string };
   /** Wird als letzte Zeile angehängt, sobald die App im Store steht. */
   link?: string;
 }
@@ -64,11 +64,11 @@ export interface ShareOptions {
  * ▲ steht für die Punktzahl, ⛓ für die längste Kette, ◈ für Prisma-Steine.
  */
 export function buildShareText(state: GameState, options: ShareOptions = {}): string {
-  const { locale = 'de-DE', link, labels = { endless: 'Endlos', zen: 'Zen' } } = options;
+  const { locale = 'de-DE', link, labels = { endless: 'Endlos', zen: 'Zen', tempo: 'Tempo' } } = options;
   const title =
     state.mode === 'daily' && state.puzzleNumber !== null
       ? `${SHARE_TITLE} #${state.puzzleNumber}`
-      : `${SHARE_TITLE} · ${state.mode === 'zen' ? labels.zen : labels.endless}`;
+      : `${SHARE_TITLE} · ${state.mode === 'zen' ? labels.zen : state.mode === 'tempo' ? (labels.tempo ?? 'Tempo') : labels.endless}`;
 
   const lines: string[] = [title, ''];
 

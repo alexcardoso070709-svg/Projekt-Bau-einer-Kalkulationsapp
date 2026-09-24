@@ -16,6 +16,10 @@ export interface Strings {
   endlessSub: string;
   zen: string;
   zenSub: string;
+  tempo: string;
+  tempoSub: string;
+  timeUp: string;
+  seconds: string;
   stats: string;
   howTo: string;
   score: string;
@@ -79,6 +83,10 @@ const de: Strings = {
   endlessSub: 'Spiel, bis nichts mehr geht',
   zen: 'Zen',
   zenSub: 'Ohne Ende, ohne Druck',
+  tempo: 'Tempo',
+  tempoSub: 'Eine Minute · Ketten schenken Zeit',
+  timeUp: 'Zeit abgelaufen',
+  seconds: 'Sek.',
   stats: 'Statistik',
   howTo: 'So geht’s',
   score: 'Punkte',
@@ -142,6 +150,10 @@ const en: Strings = {
   endlessSub: 'Play until you’re stuck',
   zen: 'Zen',
   zenSub: 'No end, no pressure',
+  tempo: 'Tempo',
+  tempoSub: 'One minute · chains buy time',
+  timeUp: 'Time’s up',
+  seconds: 'sec',
   stats: 'Stats',
   howTo: 'How to play',
   score: 'Score',

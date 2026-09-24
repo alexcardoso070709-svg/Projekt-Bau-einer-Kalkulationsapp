@@ -76,7 +76,7 @@ export default function App() {
    * mit jedem Zug, und jeder Zug sollte nicht die ganze App neu zeichnen.
    * Der Startbildschirm liest sie beim Zurückkehren.
    */
-  const gespeichert = useRef<SavedGames>({ daily: null, endless: null, zen: null });
+  const gespeichert = useRef<SavedGames>({ daily: null, endless: null, zen: null, tempo: null });
   const statsRef = useRef(stats);
   statsRef.current = stats;
   /** Ergebnis, das schon verbucht, aber noch nicht gezeigt ist. */
@@ -254,7 +254,7 @@ export default function App() {
   }
 
   const tagesStand = isTodaysDaily(gespeichert.current.daily) ? gespeichert.current.daily : null;
-  const pausiert = (['endless', 'zen'] as Mode[]).filter((m) => gespeichert.current[m]);
+  const pausiert = (['endless', 'tempo', 'zen'] as Mode[]).filter((m) => gespeichert.current[m]);
 
   return (
     <SafeAreaProvider>

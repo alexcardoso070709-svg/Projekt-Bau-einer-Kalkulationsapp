@@ -48,7 +48,7 @@ export function levelGain(groupSize: number): number {
   return 1;
 }
 
-export type Mode = 'daily' | 'endless' | 'zen';
+export type Mode = 'daily' | 'endless' | 'zen' | 'tempo';
 
 export interface Position {
   row: number;
@@ -101,6 +101,8 @@ export interface MoveResult {
   highestLevel: Level;
   /** Zahl der Prisma-Explosionen in diesem Zug. */
   prismas: number;
+  /** Im Tempo-Modus gutgeschriebene Bonuszeit in Millisekunden, sonst 0. */
+  timeBonusMs: number;
 }
 
 export interface GameState {
@@ -124,6 +126,13 @@ export interface GameState {
    * geteiltes Ergebnis überhaupt vergleichbar.
    */
   moveLimit: number | null;
+  /**
+   * Nur im Tempo-Modus: verfügbare Spielzeit in Millisekunden, wächst durch
+   * Zeitboni. Fehlt bei allen anderen Modi (und bei älteren Spielständen).
+   */
+  timeLimitMs?: number | null;
+  /** Nur im Tempo-Modus: bereits verbrauchte Spielzeit in Millisekunden. */
+  elapsedMs?: number;
   seed: number;
   /** Interner Zählerstand des Zufallsgenerators, macht den Zustand speicherbar. */
   rngCalls: number;
