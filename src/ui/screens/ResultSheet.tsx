@@ -10,10 +10,10 @@
  * Nachricht funktioniert. Auf dem eigenen Bildschirm verdient es mehr.
  */
 import React, { useEffect, useMemo, useState } from 'react';
-import { Platform, Share, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Platform, Share, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Text } from '../components/Text';
 import Animated, { FadeIn, FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { msUntilNextPuzzle } from '../../game/daily';
 import { buildShareText, formatNumber } from '../../game/share';
 import { Board, GameState, Level } from '../../game/types';
 import { numberLocale, strings } from '../../i18n/strings';
@@ -22,6 +22,7 @@ import * as feedback from '../feedback';
 import { FONT, Palette, RADIUS, SPACING, TABULAR } from '../theme';
 import { Button } from '../components/Button';
 import { Counter } from '../components/Counter';
+import { Countdown } from '../components/Countdown';
 import { Confetti } from '../components/Effects';
 import { Icon } from '../components/Icon';
 import { Stone } from '../components/Stone';
@@ -32,21 +33,10 @@ export interface ResultSheetProps {
   palette: Palette;
   /** Ein schon früher abgeschlossenes Tagesrätsel, erneut angezeigt. */
   archived?: boolean;
+  /** Bestwert vor dieser Partie. Nur wer ihn übertrifft, bekommt die Feier. */
+  previousBest?: number;
   onAgain?: () => void;
   onHome: () => void;
-}
-
-/** Restzeit bis Mitternacht als hh:mm:ss. */
-export function useCountdown(active: boolean): string {
-  const [rest, setRest] = useState(() => msUntilNextPuzzle());
-  useEffect(() => {
-    if (!active) return;
-    const id = setInterval(() => setRest(msUntilNextPuzzle()), 1000);
-    return () => clearInterval(id);
-  }, [active]);
-  const s = Math.max(0, Math.floor(rest / 1000));
-  const zwei = (n: number) => String(n).padStart(2, '0');
-  return `${zwei(Math.floor(s / 3600))}:${zwei(Math.floor((s % 3600) / 60))}:${zwei(s % 60)}`;
 }
 
 /** Endfeld aus echten Steinen, leere Zeilen oben abgeschnitten. */
@@ -76,18 +66,18 @@ function MiniBoard({ board, palette, size }: { board: Board; palette: Palette; s
   );
 }
 
-export function ResultSheet({ game, stats, palette, archived = false, onAgain, onHome }: ResultSheetProps) {
+export function ResultSheet({ game, stats, palette, archived = false, previousBest = 0, onAgain, onHome }: ResultSheetProps) {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const reduced = useReducedMotion();
   const istTagesraetsel = game.mode === 'daily';
-  const countdown = useCountdown(istTagesraetsel);
   const [kopiert, setKopiert] = useState(false);
   const [punkte, setPunkte] = useState(0);
   const [sheetHoehe, setSheetHoehe] = useState(600);
 
   const bestwert = stats.bestScore[game.mode] ?? 0;
-  const istRekord = !archived && game.score > 0 && game.score >= bestwert;
+  // Gleichstand mit dem alten Bestwert ist kein Rekord.
+  const istRekord = !archived && game.score > previousBest;
 
   // Die Punkte zählen erst hoch, wenn das Fenster steht — sonst verpasst man es.
   useEffect(() => {
@@ -177,7 +167,7 @@ export function ResultSheet({ game, stats, palette, archived = false, onAgain, o
 
         {istTagesraetsel ? (
           <Text style={[styles.countdown, { color: palette.textFaint }]}>
-            {strings.nextPuzzle} {countdown}
+            {strings.nextPuzzle} <Countdown />
           </Text>
         ) : null}
 

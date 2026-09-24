@@ -5,7 +5,7 @@
  * Serienzählung ist heikel: Sie entscheidet, ob jemand nach 40 Tagen seine
  * Serie verliert, und darf sich dabei nicht verzählen.
  */
-import { dateKey, puzzleNumber } from '../game/daily';
+import { dateForPuzzle, dateKey, puzzleNumber } from '../game/daily';
 import { Board, GameState, Mode } from '../game/types';
 
 export interface DailyResult {
@@ -80,8 +80,12 @@ function yesterdayKey(today: Date): string {
  * Rätsel so lange wiederholen, bis das Ergebnis gefällt.
  */
 export function recordGame(stats: Stats, game: GameState, now = new Date()): Stats {
-  const key = dateKey(now);
   const istTages = game.mode === 'daily' && game.puzzleNumber !== null;
+  // Maßgeblich ist der Tag des Rätsels, nicht der Moment des Spielendes: Wer
+  // um 23:58 beginnt und um 0:03 fertig wird, hat das Rätsel von gestern
+  // gelöst — und darf das von heute noch spielen.
+  const tagDesRaetsels = istTages ? dateForPuzzle(game.puzzleNumber as number) : now;
+  const key = dateKey(tagDesRaetsels);
   if (istTages && key in stats.daily) return stats;
 
   const next: Stats = {
@@ -107,9 +111,11 @@ export function recordGame(stats: Stats, game: GameState, now = new Date()): Sta
     puzzle: game.puzzleNumber as number,
     board: game.board.map((r) => r.slice()),
   };
-  next.streak = stats.lastDailyKey === yesterdayKey(now) ? stats.streak + 1 : 1;
+  next.streak = stats.lastDailyKey === yesterdayKey(tagDesRaetsels) ? stats.streak + 1 : 1;
   next.longestStreak = Math.max(stats.longestStreak, next.streak);
-  next.lastDailyKey = key;
+  // Nie rückwärts: Ein nachgereichtes älteres Rätsel verschiebt die Serie nicht.
+  if (!stats.lastDailyKey || key > stats.lastDailyKey) next.lastDailyKey = key;
+  else next.streak = stats.streak;
 
   const keys = Object.keys(next.daily).sort();
   for (const alt of keys.slice(0, Math.max(0, keys.length - ARCHIVE_LIMIT))) {

@@ -6,7 +6,7 @@
  * Knöpfe, Statistik, Ergebnis. Das hält die App in allen Märkten
  * veröffentlichbar, ohne dass Inhalte nachgezogen werden müssen.
  */
-import { NativeModules, Platform } from 'react-native';
+import { getLocales } from 'expo-localization';
 
 export interface Strings {
   play: string;
@@ -194,20 +194,18 @@ const en: Strings = {
   resultTitle: 'Result',
 };
 
+/**
+ * Gerätesprache über expo-localization. Früher wurde sie aus
+ * NativeModules.SettingsManager gelesen — eine Schnittstelle der alten
+ * React-Native-Architektur, die in der neuen nicht verlässlich existiert.
+ * Deutsche Geräte hätten dann Englisch gezeigt.
+ */
 function deviceLocale(): string {
   try {
-    if (Platform.OS === 'ios') {
-      const settings = NativeModules.SettingsManager?.settings;
-      return settings?.AppleLocale ?? settings?.AppleLanguages?.[0] ?? 'en';
-    }
-    if (Platform.OS === 'android') {
-      return NativeModules.I18nManager?.localeIdentifier ?? 'en';
-    }
-    if (typeof navigator !== 'undefined') return navigator.language ?? 'en';
+    return getLocales()[0]?.languageTag ?? 'en';
   } catch {
-    // Absichtlich still: eine fehlende Spracheinstellung darf die App nicht aufhalten.
+    return 'en';
   }
-  return 'en';
 }
 
 export const locale = deviceLocale();

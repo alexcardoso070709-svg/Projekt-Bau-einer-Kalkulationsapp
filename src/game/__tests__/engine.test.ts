@@ -246,3 +246,25 @@ describe('Zugbegrenzung im Tagesrätsel', () => {
     expect(a.queue).toEqual(b.queue);
   });
 });
+
+describe('Tipp ohne punktbringenden Zug', () => {
+  it('legt den Stein neben seinesgleichen statt in die erste Spalte', () => {
+    const game = {
+      ...createGame({ mode: 'zen', seed: 1 }),
+      board: boardFrom(['2..3.']),
+      queue: [3, 1, 1] as Level[],
+    };
+    // Nichts verschmilzt, aber Spalte 3 und 5 liegen neben der Drei; die
+    // Drei selbst zu überdecken (Spalte 4) bereitet nichts vor.
+    expect([2, 4]).toContain(suggestColumn(game));
+  });
+
+  it('bevorzugt bei völligem Gleichstand den niedrigsten Stapel', () => {
+    const game = {
+      ...createGame({ mode: 'zen', seed: 1 }),
+      board: boardFrom(['4....', '4....', '5....']),
+      queue: [1, 1, 1] as Level[],
+    };
+    expect(suggestColumn(game)).not.toBe(0);
+  });
+});

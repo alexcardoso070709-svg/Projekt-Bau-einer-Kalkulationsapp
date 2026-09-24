@@ -11,7 +11,8 @@
  * nächsten Zug nicht: Sie laufen über dem Feld, nie davor.
  */
 import React, { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Text } from './Text';
 import Animated, {
   Easing,
   useAnimatedStyle,

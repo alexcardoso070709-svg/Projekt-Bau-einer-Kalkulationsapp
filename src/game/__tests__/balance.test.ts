@@ -8,7 +8,7 @@
  * einziger Funktionstest ausschlägt. Deshalb stehen die Grenzen hier.
  */
 import { canDrop } from '../board';
-import { DAILY_MOVES, createGame, playMove, suggestColumn } from '../engine';
+import { DAILY_MOVES, createGame, playMove, previewMove, suggestColumn } from '../engine';
 import { COLS, GameState } from '../types';
 
 type Strategy = (s: GameState) => number | null;
@@ -22,8 +22,27 @@ function zufallsZug(rand: () => number): Strategy {
   };
 }
 
-/** Geübt: nimmt den Zug mit dem besten Sofortertrag. */
-const geuebt: Strategy = (s) => suggestColumn(s);
+/**
+ * Geübt: nimmt den Zug mit dem besten Sofortertrag, bei Gleichstand die erste
+ * Spalte. Auf diesen Spieler sind die Grenzen unten kalibriert. Er ist hier
+ * fest verankert, statt den Tipp-Knopf zu verwenden: Als der Tipp klüger
+ * wurde, verschob sich sonst stillschweigend die Messlatte.
+ */
+const geuebt: Strategy = (s) => {
+  let best: number | null = null;
+  let bestPunkte = -1;
+  for (let c = 0; c < COLS; c++) {
+    const punkte = previewMove(s, c);
+    if (punkte > bestPunkte) {
+      bestPunkte = punkte;
+      best = c;
+    }
+  }
+  return best;
+};
+
+/** Könner: folgt dem Tipp-Knopf, der auch Verschmelzungen vorbereitet. */
+const koennerZug: Strategy = (s) => suggestColumn(s);
 
 function spieleTag(tag: number, strategie: Strategy): GameState {
   let s = createGame({ mode: 'daily', date: new Date(2026, 0, tag) });
@@ -104,5 +123,11 @@ describe('Spielbalance im Tagesrätsel', () => {
   it('macht keine zwei Tage gleich', () => {
     const punkte = new Set(koenner.ergebnisse.map((s) => s.score));
     expect(punkte.size).toBeGreaterThan(TAGE * 0.8);
+  });
+
+  it('lässt sich durch den Tipp-Knopf nachweislich besser spielen', () => {
+    // Ein Tipp, der nicht besser spielt als reine Gier, wäre wertlos.
+    const koenner = auswerten(TAGE, koennerZug);
+    expect(koenner.punkteSchnitt).toBeGreaterThan(auswerten(TAGE, geuebt).punkteSchnitt);
   });
 });

@@ -309,15 +309,34 @@ export function previewMove(state: GameState, col: number): number {
   return resolve(placed.board, placed.landed).points;
 }
 
-/** Beste Spalte nach reiner Punktzahl — Grundlage des Hinweis-Knopfs. */
+/**
+ * Empfohlene Spalte für den Tipp-Knopf.
+ *
+ * Vorrang hat, was sofort Punkte bringt. Bringt kein Zug etwas — der häufige
+ * Fall —, entscheidet, ob der Stein neben seinesgleichen landet und so eine
+ * spätere Verschmelzung vorbereitet; danach, wie niedrig der Stapel ist.
+ * Früher gewann bei Gleichstand schlicht die erste Spalte: Der Tipp riet
+ * dann oft zu Spalte 1, ohne jeden Grund.
+ */
 export function suggestColumn(state: GameState): number | null {
+  const level = state.queue[0];
+  const rows = state.board.length;
   let best: number | null = null;
-  let bestPoints = -1;
+  let bestWert = -Infinity;
   for (let col = 0; col < state.board[0].length; col++) {
-    const points = previewMove(state, col);
-    if (points < 0) continue;
-    if (points > bestPoints) {
-      bestPoints = points;
+    const placed = drop(state.board, col, level);
+    if (!placed) continue;
+    const points = resolve(placed.board, placed.landed).points;
+    const { row } = placed.landed;
+    let nachbarn = 0;
+    for (const [dr, dc] of [[1, 0], [0, -1], [0, 1]]) {
+      const r = row + dr;
+      const c = col + dc;
+      if (r < rows && c >= 0 && c < state.board[0].length && state.board[r][c] === level) nachbarn++;
+    }
+    const wert = points * 1000 + nachbarn * 10 + row;
+    if (wert > bestWert) {
+      bestWert = wert;
       best = col;
     }
   }

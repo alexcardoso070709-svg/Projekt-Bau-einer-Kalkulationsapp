@@ -45,3 +45,12 @@ export function msUntilNextPuzzle(now: Date = new Date()): number {
   const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
   return next.getTime() - now.getTime();
 }
+
+/**
+ * Kalendertag eines Rätsels. Umkehrung von puzzleNumber — nötig, damit ein
+ * kurz vor Mitternacht begonnenes und danach beendetes Rätsel seinem eigenen
+ * Tag zugerechnet wird statt dem folgenden.
+ */
+export function dateForPuzzle(n: number): Date {
+  return new Date(EPOCH_YEAR, EPOCH_MONTH, EPOCH_DAY + n - 1);
+}

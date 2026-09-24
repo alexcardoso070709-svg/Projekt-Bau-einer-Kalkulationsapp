@@ -5,7 +5,7 @@
  * Navigations-Bibliothek: Bei vier Ansichten wäre sie mehr Ballast als Hilfe.
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, View, useColorScheme } from 'react-native';
+import { BackHandler, StyleSheet, View, useColorScheme } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import {
   Outfit_400Regular,
@@ -66,7 +66,7 @@ export default function App() {
   const [sheet, setSheet] = useState<SheetName>(null);
   const [stats, setStats] = useState<Stats>(DEFAULT_STATS);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
-  const [ergebnis, setErgebnis] = useState<{ game: GameState; archiv: boolean } | null>(null);
+  const [ergebnis, setErgebnis] = useState<{ game: GameState; archiv: boolean; vorherBest?: number } | null>(null);
   const [freiesSpiel, setFreiesSpiel] = useState<GameState | null>(null);
   const [tagesSpiel, setTagesSpiel] = useState<GameState | null>(null);
   const zaehler = useRef(1);
@@ -155,10 +155,11 @@ export default function App() {
 
   const beende = useCallback(
     (game: GameState) => {
+      const vorherBest = stats.bestScore[game.mode] ?? 0;
       const neu = recordGame(stats, game);
       setStats(neu);
       saveStats(neu);
-      setErgebnis({ game, archiv: false });
+      setErgebnis({ game, archiv: false, vorherBest });
     },
     [stats],
   );
@@ -172,6 +173,30 @@ export default function App() {
     setErgebnis(null);
     if (screen.name !== 'home') zeige({ name: 'home' });
   }, [screen.name, zeige]);
+
+  /**
+   * Android-Zurück-Taste. Ohne das beendete sie die App von überall aus —
+   * auch mitten in einer Partie. Jetzt schließt sie, was obenauf liegt:
+   * Fenster, Ergebnis, Spiel. Erst im Menü verlässt sie die App.
+   */
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (sheet) {
+        setSheet(null);
+        return true;
+      }
+      if (screen.name === 'tutorial') {
+        tutorialFertig();
+        return true;
+      }
+      if (ergebnis || screen.name !== 'home') {
+        zumMenue();
+        return true;
+      }
+      return false;
+    });
+    return () => sub.remove();
+  }, [sheet, ergebnis, screen.name, tutorialFertig, zumMenue]);
 
   if (!bereit || !schriftBereit) {
     // Erst zeichnen, wenn Daten und Schrift da sind — sonst springt das
@@ -192,7 +217,7 @@ export default function App() {
               stats={stats}
               heuteGespielt={dailyDone(stats)}
               tagesStand={tagesSpiel}
-              hatGespeichertesSpiel={freiesSpiel !== null}
+              gespeicherterModus={freiesSpiel?.mode ?? null}
               showShapes={settings.colorAssist}
               onStart={starte}
               onResume={setzeFort}
@@ -236,6 +261,7 @@ export default function App() {
             stats={stats}
             palette={palette}
             archived={ergebnis.archiv}
+            previousBest={ergebnis.vorherBest}
             onAgain={ergebnis.game.mode === 'daily' ? undefined : () => starte(ergebnis.game.mode)}
             onHome={zumMenue}
           />

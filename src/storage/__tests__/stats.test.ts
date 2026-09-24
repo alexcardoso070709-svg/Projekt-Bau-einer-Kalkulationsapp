@@ -93,3 +93,20 @@ describe('Freie Partien', () => {
     expect(s.played).toBe(2);
   });
 });
+
+describe('Rätsel über Mitternacht', () => {
+  it('rechnet ein nach Mitternacht beendetes Rätsel seinem eigenen Tag zu', () => {
+    const spiel = tagesSpiel(10);
+    const kurzNachMitternacht = new Date(2026, 8, 11, 0, 4);
+    const s = recordGame(DEFAULT_STATS, spiel, kurzNachMitternacht);
+    expect(dailyDone(s, tag(10))).not.toBeNull();
+    // Das Rätsel des neuen Tages bleibt frei.
+    expect(dailyDone(s, kurzNachMitternacht)).toBeNull();
+  });
+
+  it('zählt die Serie danach normal weiter', () => {
+    let s = recordGame(DEFAULT_STATS, tagesSpiel(10), new Date(2026, 8, 11, 0, 4));
+    s = recordGame(s, tagesSpiel(11), tag(11));
+    expect(s.streak).toBe(2);
+  });
+});

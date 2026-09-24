@@ -19,7 +19,8 @@
       "requireFullScreen": true,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "UIViewControllerBasedStatusBarAppearance": true
+        "UIViewControllerBasedStatusBarAppearance": true,
+        "CFBundleAllowMixedLocalizations": true
       }
     },
     "android": {
@@ -52,8 +53,13 @@
             "backgroundColor": "#0A0D14"
           }
         }
-      ]
+      ],
+      "expo-localization"
     ],
-    "backgroundColor": "#0A0D14"
+    "backgroundColor": "#0A0D14",
+    "locales": {
+      "de": "./locales/de.json",
+      "en": "./locales/en.json"
+    }
   }
 }

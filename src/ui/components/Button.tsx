@@ -6,7 +6,8 @@
  * wo der eigentliche Bildwechsel einen Moment braucht.
  */
 import React, { useCallback } from 'react';
-import { Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, View, ViewStyle } from 'react-native';
+import { Text } from './Text';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,

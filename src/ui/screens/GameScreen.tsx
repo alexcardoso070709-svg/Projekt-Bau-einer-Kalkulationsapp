@@ -12,7 +12,8 @@
  * wie schön es aussieht.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Text } from '../components/Text';
 import Animated, {
   FadeIn,
   useAnimatedStyle,

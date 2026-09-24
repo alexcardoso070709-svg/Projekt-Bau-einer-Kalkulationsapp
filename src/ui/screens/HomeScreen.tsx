@@ -6,7 +6,8 @@
  * erzeugt. Endlos und Zen sind für alle da, die heute mehr wollen.
  */
 import React, { useEffect } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from '../components/Text';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   Easing,
@@ -29,7 +30,7 @@ import { FONT, Palette, RADIUS, SPACING, STONES } from '../theme';
 import { Backdrop } from '../components/Backdrop';
 import { Button } from '../components/Button';
 import { Icon } from '../components/Icon';
-import { useCountdown } from './ResultSheet';
+import { Countdown } from '../components/Countdown';
 import { Stone } from '../components/Stone';
 
 /**
@@ -82,7 +83,8 @@ export interface HomeScreenProps {
   heuteGespielt: DailyResult | null;
   /** Laufendes, noch nicht beendetes Tagesrätsel. */
   tagesStand: GameState | null;
-  hatGespeichertesSpiel: boolean;
+  /** Modus der pausierten freien Partie, falls es eine gibt. */
+  gespeicherterModus: Mode | null;
   showShapes: boolean;
   onStart: (mode: Mode) => void;
   onResume: () => void;
@@ -97,7 +99,7 @@ export function HomeScreen({
   stats,
   heuteGespielt,
   tagesStand,
-  hatGespeichertesSpiel,
+  gespeicherterModus,
   showShapes,
   onStart,
   onResume,
@@ -107,7 +109,6 @@ export function HomeScreen({
 }: HomeScreenProps) {
   const insets = useSafeAreaInsets();
   const nummer = puzzleNumber();
-  const countdown = useCountdown(heuteGespielt !== null);
 
   return (
     <View style={[styles.root, { backgroundColor: palette.bg }]}>
@@ -132,10 +133,11 @@ export function HomeScreen({
       </Animated.View>
 
       <View style={styles.modes}>
-        {hatGespeichertesSpiel ? (
+        {gespeicherterModus ? (
           <Animated.View entering={FadeInDown.delay(100).duration(380)} style={styles.full}>
             <Button
               label={strings.resume}
+              sublabel={gespeicherterModus === 'zen' ? strings.zen : strings.endless}
               palette={palette}
               variant="secondary"
               onPress={onResume}
@@ -180,7 +182,7 @@ export function HomeScreen({
               <View style={styles.dailyDone}>
                 <Icon name="check" size={15} color="#FFFFFF" strokeWidth={2.8} />
                 <Text style={styles.dailyDoneText}>
-                  {formatNumber(heuteGespielt.score, numberLocale)} · {strings.nextIn} {countdown}
+                  {formatNumber(heuteGespielt.score, numberLocale)} · {strings.nextIn} <Countdown />
                 </Text>
               </View>
             ) : tagesStand && tagesStand.moveLimit !== null ? (
