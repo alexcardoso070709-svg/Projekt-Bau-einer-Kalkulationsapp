@@ -11,6 +11,8 @@ import { DEFAULT_SETTINGS, Settings, Stats, isTodaysDaily, normalizeStats } from
 
 export * from './stats';
 
+// Die Schlüssel tragen noch den Arbeitstitel. Absicht: Eine Umbenennung
+// würde bestehende Spielstände verwaisen lassen.
 const KEY_STATS = 'prisma.stats.v1';
 const KEY_SETTINGS = 'prisma.settings.v1';
 

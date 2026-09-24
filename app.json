@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Prisma",
-    "slug": "prisma-puzzle",
+    "name": "Irisa",
+    "slug": "irisa",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "prisma",
+    "scheme": "irisa",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "primaryColor": "#4D9BFF",
@@ -13,7 +13,7 @@
       "**/*"
     ],
     "ios": {
-      "bundleIdentifier": "com.prismapuzzle.app",
+      "bundleIdentifier": "com.irisagame.app",
       "buildNumber": "1",
       "supportsTablet": true,
       "requireFullScreen": true,
@@ -24,7 +24,7 @@
       }
     },
     "android": {
-      "package": "com.prismapuzzle.app",
+      "package": "com.irisagame.app",
       "versionCode": 1,
       "predictiveBackGestureEnabled": false,
       "adaptiveIcon": {
@@ -37,7 +37,7 @@
     "web": {
       "favicon": "./assets/favicon.png",
       "bundler": "metro",
-      "name": "Prisma",
+      "name": "Irisa",
       "themeColor": "#0A0D14",
       "backgroundColor": "#0A0D14"
     },

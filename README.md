@@ -1,4 +1,4 @@
-# PRISMA
+# Irisa
 
 Ein sprachfreies Farb-Merge-Puzzle mit täglichem Rätsel. Offline spielbar,
 werbefrei, ohne Konto, ohne Datensammlung.
@@ -106,7 +106,7 @@ schlagen an, wenn eine spätere Änderung die Balance kippt.
 npm install
 npm start          # Expo starten, dann QR-Code mit Expo Go scannen
 npm run web        # im Browser
-npm test           # 87 Tests, unter 2 Sekunden
+npm test           # 102 Tests, unter 2 Sekunden
 npm run typecheck
 ```
 
@@ -137,7 +137,7 @@ jedem Gerät der Welt bitgenau dasselbe Tagesrätsel.
 
 Zwölf Ziele, die ein automatischer Browser-Test gegen den echten Build prüft
 (`scripts/premium-audit.js`, Aufruf steht im Dateikopf). Ausgangsstand vor der
-Überarbeitung: 1 von 12. Heute: **12 von 12**, ohne Konsolenfehler.
+Überarbeitung: 1 von 12. Heute: **16 von 16** (inklusive vier Robustheitsprüfungen), ohne Konsolenfehler.
 
 | # | Ziel | Gemessen |
 |---|---|---|
@@ -232,68 +232,9 @@ keine Marketinggrafiken.
 
 ---
 
-## Vorgeschlagene Store-Texte
+## Store-Texte und Launch
 
-**Name** (max. 30)
-```
-Prisma
-```
-
-**Untertitel** (max. 30)
-```
-Das tägliche Farbpuzzle
-```
-
-**Schlagwörter** (max. 100 Zeichen, ohne Leerzeichen nach Kommas)
-```
-puzzle,täglich,offline,farben,denkspiel,rätsel,knobeln,merge,entspannen,werbefrei
-```
-
-**Werbetext** (max. 170)
-```
-Jeden Tag ein neues Rätsel — für alle auf der Welt dasselbe. Ohne Werbung, ohne Konto, ohne Internet. Teile dein Ergebnis, ohne die Lösung zu verraten.
-```
-
-**Beschreibung**
-```
-Lass Farbsteine fallen. Drei gleiche, die sich berühren, werden zur nächsten
-Farbe. Größere Gruppen überspringen Stufen. Und wer über Blau hinauskommt,
-zündet ein Prisma.
-
-Klingt einfach. Ist es auch — in fünf Sekunden verstanden, ohne ein Wort
-Erklärung. Gut zu werden dauert länger.
-
-DAS TAGESRÄTSEL
-Jeden Tag ein neues Spielfeld, weltweit für alle gleich. 90 Züge, dieselben
-Steine in derselben Reihenfolge. Die Frage ist nur, wer mehr daraus macht.
-Teile dein Ergebnis als Farbmuster — es verrät nichts über die Lösung.
-
-ENDLOS
-Spiel weiter, bis kein Zug mehr möglich ist. Für die Bestenjagd.
-
-ZEN
-Kein Spielende, kein Zeitdruck. Züge beliebig zurücknehmen. Für zwischendurch.
-
-KLANG UND GEFÜHL
-Jede Verschmelzung klingt eine Stufe höher als die vorige. Weil die Töne einer
-pentatonischen Leiter folgen, klingt jede Kette harmonisch — du spielst beim
-Puzzeln nebenbei eine Melodie. Das Spiel respektiert deinen Stummschalter und
-unterbricht deine Musik nicht.
-
-WAS NICHT DRIN IST
-Keine Werbung. Keine Käufe. Keine Energie-Leisten, die dich zum Warten zwingen.
-Kein Konto. Keine Datensammlung. Die App braucht kein Internet — im Flugzeug,
-in der U-Bahn und im Funkloch funktioniert sie genauso.
-
-Alles bleibt auf deinem Gerät.
-
-BARRIEREFREI
-Jede Farbe hat zusätzlich eine eigene Form. Wer Farben schlecht unterscheidet,
-erkennt die Steine an Kreis, Ring, Quadrat, Raute und Stern.
-```
-
-**Kategorie:** Spiele → Puzzle (zweitrangig: Gelegenheitsspiele)
-**Altersfreigabe:** 4+
+Store-Texte: `store/`. Schritte bis zur Veröffentlichung: **[LAUNCH.md](LAUNCH.md)**.
 
 ---
 

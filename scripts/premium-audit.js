@@ -1,5 +1,5 @@
 /**
- * PRISMA Premium-Prüfstand.
+ * Irisa Premium-Prüfstand.
  *
  * Prüft die zwölf Ziele der Premium-Checkliste gegen den echten Web-Build.
  * Spielstände werden vor dem Laden in localStorage gelegt (dort speichert die
@@ -330,7 +330,7 @@ const PRUEFUNGEN = [
     await page.waitForTimeout(500);
     const ablage = await page.evaluate(() => navigator.clipboard.readText().catch(() => ''));
     await ctx.close();
-    return [/PRISMA/.test(ablage), /PRISMA/.test(ablage) ? 'Ergebnis landet in der Zwischenablage' : 'Knopf ohne Wirkung'];
+    return [/IRISA/.test(ablage), /IRISA/.test(ablage) ? 'Ergebnis landet in der Zwischenablage' : 'Knopf ohne Wirkung'];
   }],
 ];
 

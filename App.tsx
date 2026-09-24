@@ -1,5 +1,5 @@
 /**
- * PRISMA — Einstiegspunkt.
+ * Irisa — Einstiegspunkt.
  *
  * Hält Bildschirmwechsel und gespeicherte Daten zusammen. Bewusst ohne
  * Navigations-Bibliothek: Bei vier Ansichten wäre sie mehr Ballast als Hilfe.

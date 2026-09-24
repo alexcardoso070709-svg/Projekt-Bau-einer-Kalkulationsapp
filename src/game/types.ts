@@ -1,5 +1,5 @@
 /**
- * PRISMA — Kerntypen der Spiel-Engine.
+ * Irisa — Kerntypen der Spiel-Engine.
  *
  * Die Engine ist bewusst frei von React und Plattform-APIs: sie ist reines,
  * deterministisches TypeScript. Das macht sie testbar und erlaubt es, das

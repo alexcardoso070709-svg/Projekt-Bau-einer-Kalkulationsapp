@@ -1,5 +1,5 @@
 /**
- * PRISMA — Spiellogik.
+ * Irisa — Spiellogik.
  *
  * Ein Zug besteht aus: Stein ablegen, verschmelzen, nachrutschen lassen,
  * erneut prüfen. Die Schleife aus Verschmelzung und Nachrutschen erzeugt

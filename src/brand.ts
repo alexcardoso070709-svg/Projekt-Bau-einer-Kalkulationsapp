@@ -1,14 +1,14 @@
 /**
  * Name und Store-Adresse der App — an genau einer Stelle.
  *
- * „Prisma" ist ein Arbeitstitel: Im App Store gibt es bereits die bekannte
- * Foto-App „Prisma" von Prisma Labs. Vor dem Launch wird hier umbenannt
- * (und in app.json sowie locales/*.json, siehe LAUNCH.md).
+ * Irisa, von „Iris" und „irisieren" (in Regenbogenfarben schillern). Der
+ * Arbeitstitel „Prisma" war im App Store vergeben (Foto-App von Prisma
+ * Labs). Wer den Namen ändert, ändert ihn hier sowie in app.json und
+ * locales/*.json (siehe LAUNCH.md).
  *
- * Die Spielmechanik „Prisma" (die Explosion) ist davon unabhängig und darf
- * ihren Namen behalten.
+ * Die Spielmechanik „Prisma" — die Explosion — heißt weiterhin so.
  */
-export const APP_NAME = 'Prisma';
+export const APP_NAME = 'Irisa';
 
 /** Kopfzeile des geteilten Ergebnisses. */
 export const SHARE_TITLE = APP_NAME.toUpperCase();
