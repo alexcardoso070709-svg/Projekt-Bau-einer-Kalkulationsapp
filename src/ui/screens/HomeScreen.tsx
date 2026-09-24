@@ -20,6 +20,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { APP_NAME } from '../../brand';
 import { puzzleNumber } from '../../game/daily';
 import { GameState, Level, Mode } from '../../game/types';
 import { numberLocale, strings } from '../../i18n/strings';
@@ -129,7 +130,7 @@ export function HomeScreen({
             </Animated.View>
           ))}
         </View>
-        <Text style={[styles.title, { color: palette.text }]}>PRISMA</Text>
+        <Text style={[styles.title, { color: palette.text }]}>{APP_NAME.toUpperCase()}</Text>
       </Animated.View>
 
       <View style={styles.modes}>

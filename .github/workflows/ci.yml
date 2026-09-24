@@ -1,0 +1,42 @@
+# Prüft jeden Push und jeden Pull Request: Typen, Tests und ob sich die App
+# für iOS, Android und Web bündeln lässt. Ein roter Haken hier heißt: nicht
+# veröffentlichen.
+name: Prüfung
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  pruefen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Typprüfung
+        run: npx tsc --noEmit
+      - name: Tests (in Berliner Zeit, siehe jest.global-setup.js)
+        run: npx jest --ci
+      - name: Versionsabgleich mit dem Expo SDK
+        run: |
+          node -e '
+            const soll = require("expo/bundledNativeModules.json");
+            const pkg = require("./package.json");
+            const abw = Object.keys({...pkg.dependencies, ...pkg.devDependencies})
+              .filter((n) => soll[n])
+              .map((n) => [n, require(n + "/package.json").version, soll[n]])
+              .filter(([, ist, ziel]) => ziel.startsWith("~")
+                ? ist.split(".").slice(0, 2).join(".") !== ziel.slice(1).split(".").slice(0, 2).join(".")
+                : ist !== ziel.replace(/^\^/, ""));
+            if (abw.length) { console.error("Abweichend vom SDK:", abw); process.exit(1); }
+            console.log("Alle nativen Bibliotheken passen zum SDK.");
+          '
+      - name: Bündeln für iOS, Android und Web
+        run: |
+          npx expo export --platform ios --output-dir /tmp/ios
+          npx expo export --platform android --output-dir /tmp/android
+          npx expo export --platform web --output-dir /tmp/web

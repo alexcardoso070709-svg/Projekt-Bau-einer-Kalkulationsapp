@@ -39,3 +39,6 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Zugangsschlüssel für die Play-Store-Einreichung — niemals einchecken
+google-play-service-account.json

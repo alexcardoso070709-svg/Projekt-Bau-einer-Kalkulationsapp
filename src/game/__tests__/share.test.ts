@@ -1,3 +1,4 @@
+import { SHARE_TITLE } from '../../brand';
 import { boardToEmoji, buildShareText, cellEmoji, formatNumber } from '../share';
 import { createGame } from '../engine';
 import { GameState } from '../types';
@@ -37,7 +38,7 @@ describe('Teilen-Text', () => {
 
   it('nennt die Rätselnummer, verrät aber nichts über die Lösung', () => {
     const text = buildShareText(beispiel());
-    expect(text).toContain('PRISMA #');
+    expect(text).toContain(`${SHARE_TITLE} #`);
     expect(text).toMatch(/▲ 24\.680/);
     expect(text).toContain('⛓ ×7');
     expect(text).toContain('◈ 2');
@@ -47,6 +48,14 @@ describe('Teilen-Text', () => {
     const text = buildShareText(beispiel({ bestChain: 1, prismas: 0 }));
     expect(text).not.toContain('⛓');
     expect(text).not.toContain('◈');
+  });
+
+  it('übersetzt den Modus im geteilten Text', () => {
+    const text = buildShareText(beispiel({ mode: 'endless', puzzleNumber: null }), {
+      labels: { endless: 'Endless', zen: 'Zen' },
+    });
+    expect(text).toContain('Endless');
+    expect(text).not.toContain('Endlos');
   });
 
   it('unterscheidet die Spielmodi in der Überschrift', () => {
@@ -62,7 +71,7 @@ describe('Teilen-Text', () => {
   it('besteht bis auf Zahlen und Titel nur aus Symbolen', () => {
     // Sprachfrei heißt: der Text funktioniert ohne Übersetzung in jedem Markt.
     const text = buildShareText(beispiel());
-    const buchstaben = text.replace(/PRISMA/g, '').match(/[a-zA-ZäöüÄÖÜß]/g);
+    const buchstaben = text.split(SHARE_TITLE).join('').match(/[a-zA-ZäöüÄÖÜß]/g);
     expect(buchstaben).toBeNull();
   });
 });

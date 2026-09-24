@@ -14,6 +14,7 @@ import { Platform, Share, StyleSheet, View, useWindowDimensions } from 'react-na
 import { Text } from '../components/Text';
 import Animated, { FadeIn, FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { STORE_URL } from '../../brand';
 import { puzzleNumber } from '../../game/daily';
 import { buildShareText, formatNumber } from '../../game/share';
 import { Board, GameState, Level } from '../../game/types';
@@ -90,7 +91,11 @@ export function ResultSheet({ game, stats, palette, archived = false, previousBe
 
   const teilen = async () => {
     feedback.button();
-    const text = buildShareText(game, { locale: numberLocale });
+    const text = buildShareText(game, {
+      locale: numberLocale,
+      labels: { endless: strings.endless, zen: strings.zen },
+      link: STORE_URL ?? undefined,
+    });
     try {
       if (Platform.OS !== 'web') {
         await Share.share({ message: text });
