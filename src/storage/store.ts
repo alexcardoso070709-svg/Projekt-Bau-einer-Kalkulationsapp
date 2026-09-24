@@ -71,16 +71,28 @@ export function saveGame(mode: Mode, game: GameState | null): Promise<void> {
  * älteren, gemeinsamen Ablage an ihren richtigen Platz.
  */
 export async function loadSavedGames(): Promise<SavedGames> {
+  const plaetze = Object.keys(KEY_SAVE) as Mode[];
+  // Erst alles lesen, dann entscheiden — sonst könnte eine Partie aus der
+  // älteren, gemeinsamen Ablage eine neuere am richtigen Platz überschreiben.
+  const gelesen = await Promise.all(plaetze.map((p) => read(KEY_SAVE[p]) as Promise<GameState | null>));
+  const gueltig = (g: GameState | null): g is GameState =>
+    !!g && !g.over && g.mode in KEY_SAVE && (g.mode !== 'daily' || isTodaysDaily(g));
+
   const result: SavedGames = { daily: null, endless: null, zen: null };
-  for (const platz of Object.keys(KEY_SAVE) as Mode[]) {
-    const game = (await read(KEY_SAVE[platz])) as GameState | null;
-    if (!game || game.over || !(game.mode in KEY_SAVE)) continue;
-    if (game.mode === 'daily' && !isTodaysDaily(game)) continue;
-    if (!result[game.mode]) result[game.mode] = game;
-    if (game.mode !== platz) {
-      await saveGame(game.mode, game);
-      await saveGame(platz, null);
+  plaetze.forEach((platz, i) => {
+    const g = gelesen[i];
+    if (gueltig(g) && g.mode === platz) result[platz] = g;
+  });
+  for (let i = 0; i < plaetze.length; i++) {
+    const platz = plaetze[i];
+    const g = gelesen[i];
+    if (!g || (gueltig(g) && g.mode === platz)) continue;
+    // Falsch einsortiert: nur in einen leeren Platz umziehen, nie überschreiben.
+    if (gueltig(g) && !result[g.mode]) {
+      result[g.mode] = g;
+      await saveGame(g.mode, g);
     }
+    await saveGame(platz, null);
   }
   return result;
 }

@@ -409,6 +409,19 @@ PRUEFUNGEN.push(
   }],
 );
 
+PRUEFUNGEN.push([17, 'Speicher-Umzug überschreibt nichts', async (b) => {
+  const { ctx, page } = await neueSeite(b, { speicher: {
+    'prisma.save.v1': JSON.stringify(spielstand({ mode: 'zen', score: 111 })),
+    'prisma.save.zen.v1': JSON.stringify(spielstand({ mode: 'zen', score: 999 })),
+  } });
+  await page.waitForTimeout(600);
+  const zen = JSON.parse(await page.evaluate(() => localStorage.getItem('prisma.save.zen.v1') || 'null'));
+  const alt = await page.evaluate(() => localStorage.getItem('prisma.save.v1'));
+  await ctx.close();
+  const ok = zen && zen.score === 999 && alt === null;
+  return [ok, ok ? 'neuere Zen-Partie bleibt, alte Ablage geräumt' : `Zen: ${zen && zen.score}, alte Ablage: ${alt ? 'noch da' : 'leer'}`];
+}]);
+
 (async () => {
   const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
   let bestanden = 0, gesamt = 0;
