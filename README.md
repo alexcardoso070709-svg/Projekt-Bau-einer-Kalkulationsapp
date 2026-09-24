@@ -108,7 +108,25 @@ npm start          # Expo starten, dann QR-Code mit Expo Go scannen
 npm run web        # im Browser
 npm test           # 102 Tests, unter 2 Sekunden
 npm run typecheck
+npm run build:web  # installierbare Offline-Web-App nach docs/spielen/ und download/Irisa.html
 ```
+
+### Auf dem iPhone spielen – ohne App Store
+
+`docs/spielen/` ist Irisa als Web-App zum Installieren: alles in einer Datei,
+dazu Symbol, Manifest und ein Service Worker, der die App nach dem ersten
+Öffnen komplett offline bereithält. Spielstände liegen nur auf dem Gerät.
+
+1. Einmalig auf GitHub: **Settings → Pages → Build and deployment**
+   Source „Deploy from a branch", Branch `claude/stoic-fermi-3abbl1`, Ordner `/docs`, **Save**.
+2. Nach ein, zwei Minuten auf dem iPhone in **Safari** öffnen:
+   `https://alexcardoso070709-svg.github.io/Projekt-Bau-einer-Kalkulationsapp/spielen/`
+3. Teilen-Symbol → **Zum Home-Bildschirm** → Hinzufügen.
+
+Ab dann startet Irisa vom Home-Bildschirm im Vollbild, auch im Flugmodus.
+Updates holt sich die App beim Öffnen still im Hintergrund; sie gelten ab dem
+nächsten Start. Nach Änderungen am Spiel `npm run build:web` ausführen und
+committen.
 
 ### Aufbau
 

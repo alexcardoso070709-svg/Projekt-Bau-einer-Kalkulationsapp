@@ -5,7 +5,7 @@
  * Navigations-Bibliothek: Bei vier Ansichten wäre sie mehr Ballast als Hilfe.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BackHandler, StyleSheet, View, useColorScheme } from 'react-native';
+import { BackHandler, Platform, StyleSheet, View, useColorScheme } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import {
   Outfit_400Regular,
@@ -117,6 +117,16 @@ export default function App() {
 
   const dunkel = settings.theme === 'auto' ? systemTheme !== 'light' : settings.theme === 'dark';
   const palette = dunkel ? DARK : LIGHT;
+
+  // Im Browser und als Web-App auf dem Home-Bildschirm färbt theme-color die
+  // Statusleiste. Sie muss dem gewählten Thema folgen, sonst sitzt im hellen
+  // Thema ein dunkler Balken über dem Spiel (und umgekehrt).
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => meta.setAttribute('content', palette.bg));
+    document.documentElement.style.colorScheme = dunkel ? 'dark' : 'light';
+    document.body.style.backgroundColor = palette.bg;
+  }, [dunkel, palette.bg]);
 
   /** Statistik mit der für heute gültigen Serie — ändert sich auch um Mitternacht. */
   const anzeigeStats = useMemo(

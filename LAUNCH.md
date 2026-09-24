@@ -3,7 +3,7 @@
 Was erledigt ist, ist abgehakt. Was offen ist, kann nur der Inhaber tun: Konten anlegen, Namen und Daten eintragen, einreichen.
 
 ## Erledigt
-- [x] Spiel, Tutorial, Ton, Barrierefreiheit – Prüfstand `scripts/premium-audit.js`: 16/16
+- [x] Spiel, Tutorial, Ton, Barrierefreiheit – Prüfstand `scripts/premium-audit.js`: 18/18
 - [x] 102 automatische Tests, laufen in Berliner Zeit (Sommerzeit wird mitgeprüft)
 - [x] Native Bibliotheken exakt auf Expo SDK 57; iOS-, Android- und Web-Bundle bauen; `expo prebuild` ohne Warnung
 - [x] GitHub Actions prüft jeden Push (Typen, Tests, Versionsabgleich, alle Bundles)
@@ -12,6 +12,7 @@ Was erledigt ist, ist abgehakt. Was offen ist, kann nur der Inhaber tun: Konten 
 - [x] Store-Texte DE/EN: `store/listing.de.md`, `store/listing.en.md`
 - [x] Screenshots in Pflichtgrößen, DE/EN: `store/screenshots/` (iPhone 6,9" 1320×2868 · iPad 13" 2064×2752 · Android 1080×2340); neu erzeugen mit `scripts/store-screenshots.js`
 - [x] Datenschutz (DE/EN), Support-Seite, Impressum-Vorlage: `docs/`
+- [x] Installierbare Offline-Web-App fürs iPhone ohne Store: `docs/spielen/` (`npm run build:web`)
 
 ## Offen – nur du kannst das
 1. **Name absichern.** „Irisa" war in der Websuche als App frei. Vor dem Einreichen im Markenregister prüfen: DPMA (register.dpma.de), EUIPO (euipo.europa.eu/eSearch), Klasse 9 und 41.
@@ -20,7 +21,7 @@ Was erledigt ist, ist abgehakt. Was offen ist, kann nur der Inhaber tun: Konten 
    - `docs/impressum.html`, `docs/datenschutz.html`, `docs/privacy.html`, `docs/index.html`: Name, Anschrift, E-Mail
    - `eas.json` → `submit.production.ios`: Apple-ID, App-Store-Connect-App-ID, Team-ID
    - `app.json`: Bundle-ID `com.irisagame.app` – ändern, falls bei Apple/Google schon vergeben (danach unveränderlich!)
-4. **Webseiten veröffentlichen.** GitHub → Settings → Pages → Branch `main` (nach dem Zusammenführen), Ordner `/docs`. Die Adresse ist Support- und Datenschutz-URL.
+4. **Webseiten veröffentlichen.** GitHub → Settings → Pages → „Deploy from a branch", Branch `claude/stoic-fermi-3abbl1` (nach dem Zusammenführen `main`), Ordner `/docs`. Die Adresse ist Support- und Datenschutz-URL; unter `/spielen/` liegt zugleich die installierbare Web-App fürs iPhone (siehe README).
 5. **Auf echten Geräten testen.** `npx expo start` → mit Expo Go scannen, oder `eas build --profile preview`. Einmal komplett durchspielen: Ton, Vibration, Zurück-Taste (Android), Stummschalter (iPhone).
 6. **Bauen und einreichen.**
    ```
