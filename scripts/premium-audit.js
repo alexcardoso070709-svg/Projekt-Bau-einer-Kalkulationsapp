@@ -409,6 +409,23 @@ PRUEFUNGEN.push(
   }],
 );
 
+PRUEFUNGEN.push([18, 'Umzug überlebt veraltete Stände', async (b) => {
+  // Alte Ablage im Tagesrätsel-Platz mit laufender Zen-Partie, Zen-Platz mit
+  // beendeter Partie: Die laufende muss am Zen-Platz ankommen und bleiben.
+  const { ctx, page } = await neueSeite(b, { speicher: {
+    'prisma.save.daily.v1': JSON.stringify(spielstand({ mode: 'zen', score: 555 })),
+    'prisma.save.zen.v1': JSON.stringify(spielstand({ mode: 'zen', score: 1, over: true })),
+  } });
+  await page.waitForTimeout(600);
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForTimeout(1200);
+  const zen = JSON.parse(await page.evaluate(() => localStorage.getItem('prisma.save.zen.v1') || 'null'));
+  const knopf = await page.getByText(/^(Fortsetzen|Resume)$/).count();
+  await ctx.close();
+  const ok = zen && zen.score === 555 && !zen.over && knopf === 1;
+  return [ok, ok ? 'laufende Partie auch nach Neustart erhalten' : `Zen: ${zen && zen.score}, Fortsetzen-Knöpfe: ${knopf}`];
+}]);
+
 PRUEFUNGEN.push([17, 'Speicher-Umzug überschreibt nichts', async (b) => {
   const { ctx, page } = await neueSeite(b, { speicher: {
     'prisma.save.v1': JSON.stringify(spielstand({ mode: 'zen', score: 111 })),

@@ -72,27 +72,41 @@ export function saveGame(mode: Mode, game: GameState | null): Promise<void> {
  */
 export async function loadSavedGames(): Promise<SavedGames> {
   const plaetze = Object.keys(KEY_SAVE) as Mode[];
-  // Erst alles lesen, dann entscheiden — sonst könnte eine Partie aus der
-  // älteren, gemeinsamen Ablage eine neuere am richtigen Platz überschreiben.
   const gelesen = await Promise.all(plaetze.map((p) => read(KEY_SAVE[p]) as Promise<GameState | null>));
   const gueltig = (g: GameState | null): g is GameState =>
     !!g && !g.over && g.mode in KEY_SAVE && (g.mode !== 'daily' || isTodaysDaily(g));
 
+  // 1. Entscheiden: je Modus die beste gültige Partie, egal wo sie lag.
+  //    Liegen zwei vor (alte gemeinsame Ablage und eigener Platz), gewinnt
+  //    die mit mehr Fortschritt — eine bewusste Wahl statt Zufall der Reihenfolge.
   const result: SavedGames = { daily: null, endless: null, zen: null };
+  // Partien am eigenen Platz zuerst: Bei Gleichstand bleibt die richtig
+  // einsortierte, nicht die aus der alten Ablage.
+  const reihenfolge = gelesen
+    .map((g, i) => ({ g, eigen: !!g && g.mode === plaetze[i] }))
+    .sort((x, y) => Number(y.eigen) - Number(x.eigen))
+    .map((x) => x.g);
+  reihenfolge.forEach((g) => {
+    if (!gueltig(g)) return;
+    const bisher = result[g.mode];
+    if (!bisher || g.moves > bisher.moves) result[g.mode] = g;
+  });
+
+  // 2. Aufräumen: Nur Plätze, deren Inhalt einem anderen Modus gehört, und
+  //    nur nachdem ihr Inhalt übernommen oder bewusst verworfen wurde. Eigene,
+  //    veraltete Stände bleiben liegen; loadSavedGames ignoriert sie ohnehin.
+  const zuSchreiben = new Set<Mode>();
   plaetze.forEach((platz, i) => {
     const g = gelesen[i];
-    if (gueltig(g) && g.mode === platz) result[platz] = g;
-  });
-  for (let i = 0; i < plaetze.length; i++) {
-    const platz = plaetze[i];
-    const g = gelesen[i];
-    if (!g || (gueltig(g) && g.mode === platz)) continue;
-    // Falsch einsortiert: nur in einen leeren Platz umziehen, nie überschreiben.
-    if (gueltig(g) && !result[g.mode]) {
-      result[g.mode] = g;
-      await saveGame(g.mode, g);
+    if (g && g.mode !== platz && g.mode in KEY_SAVE) {
+      if (result[g.mode] === g) zuSchreiben.add(g.mode);
     }
-    await saveGame(platz, null);
+  });
+  for (const mode of zuSchreiben) await saveGame(mode, result[mode]);
+  for (let i = 0; i < plaetze.length; i++) {
+    const g = gelesen[i];
+    const platz = plaetze[i];
+    if (g && g.mode !== platz && !zuSchreiben.has(platz)) await saveGame(platz, null);
   }
   return result;
 }

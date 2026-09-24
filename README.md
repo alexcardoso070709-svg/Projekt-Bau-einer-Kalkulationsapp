@@ -137,7 +137,7 @@ jedem Gerät der Welt bitgenau dasselbe Tagesrätsel.
 
 Zwölf Ziele, die ein automatischer Browser-Test gegen den echten Build prüft
 (`scripts/premium-audit.js`, Aufruf steht im Dateikopf). Ausgangsstand vor der
-Überarbeitung: 1 von 12. Heute: **17 von 17** (inklusive vier Robustheitsprüfungen), ohne Konsolenfehler.
+Überarbeitung: 1 von 12. Heute: **18 von 18** (inklusive vier Robustheitsprüfungen), ohne Konsolenfehler.
 
 | # | Ziel | Gemessen |
 |---|---|---|
