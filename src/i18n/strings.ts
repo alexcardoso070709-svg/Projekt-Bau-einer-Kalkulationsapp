@@ -67,6 +67,7 @@ export interface Strings {
   tryIt: string;
   skip: string;
   nextIn: string;
+  newPuzzleReady: string;
   resultTitle: string;
 }
 
@@ -129,6 +130,7 @@ const de: Strings = {
   tryIt: 'Interaktiv ausprobieren',
   skip: 'Überspringen',
   nextIn: 'Neu in',
+  newPuzzleReady: 'Das neue Rätsel ist da',
   resultTitle: 'Ergebnis',
 };
 
@@ -191,6 +193,7 @@ const en: Strings = {
   tryIt: 'Try it interactively',
   skip: 'Skip',
   nextIn: 'New in',
+  newPuzzleReady: 'The new puzzle is ready',
   resultTitle: 'Result',
 };
 

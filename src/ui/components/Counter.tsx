@@ -54,7 +54,7 @@ export function Counter({ value, testID, style, duration = 420, locale = numberL
   }, [value, duration]);
 
   return (
-    <Text testID={testID} style={style}>
+    <Text testID={testID} style={style} maxFontSizeMultiplier={1.2}>
       {formatNumber(shown, locale)}
     </Text>
   );

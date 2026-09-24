@@ -14,6 +14,7 @@ import { Platform, Share, StyleSheet, View, useWindowDimensions } from 'react-na
 import { Text } from '../components/Text';
 import Animated, { FadeIn, FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { puzzleNumber } from '../../game/daily';
 import { buildShareText, formatNumber } from '../../game/share';
 import { Board, GameState, Level } from '../../game/types';
 import { numberLocale, strings } from '../../i18n/strings';
@@ -167,7 +168,13 @@ export function ResultSheet({ game, stats, palette, archived = false, previousBe
 
         {istTagesraetsel ? (
           <Text style={[styles.countdown, { color: palette.textFaint }]}>
-            {strings.nextPuzzle} <Countdown />
+            {game.puzzleNumber !== null && game.puzzleNumber < puzzleNumber() ? (
+              strings.newPuzzleReady
+            ) : (
+              <>
+                {strings.nextPuzzle} <Countdown />
+              </>
+            )}
           </Text>
         ) : null}
 

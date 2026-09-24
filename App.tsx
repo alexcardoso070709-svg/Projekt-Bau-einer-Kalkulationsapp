@@ -4,7 +4,7 @@
  * Hält Bildschirmwechsel und gespeicherte Daten zusammen. Bewusst ohne
  * Navigations-Bibliothek: Bei vier Ansichten wäre sie mehr Ballast als Hilfe.
  */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BackHandler, StyleSheet, View, useColorScheme } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import {
@@ -16,19 +16,20 @@ import {
   useFonts,
 } from '@expo-google-fonts/outfit';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { puzzleNumber } from './src/game/daily';
 import { TUTORIAL } from './src/game/tutorial';
 import { GameState, Mode } from './src/game/types';
 import {
   DEFAULT_SETTINGS,
   DEFAULT_STATS,
-  SaveSlot,
+  SavedGames,
   Settings,
   Stats,
   archivedDailyGame,
   currentStreak,
   dailyDone,
   isTodaysDaily,
-  loadGame,
+  loadSavedGames,
   loadSettings,
   loadStats,
   recordGame,
@@ -49,12 +50,12 @@ type ScreenSpec =
   | { name: 'tutorial' }
   | { name: 'game'; mode: Mode; fortsetzen?: GameState };
 type Screen = ScreenSpec & { id: number };
-
 type SheetName = 'stats' | 'settings' | 'howto' | null;
+type Ergebnis = { game: GameState; archiv: boolean; vorherBest?: number };
 
 export default function App() {
   const systemTheme = useColorScheme();
-  const [schriftBereit] = useFonts({
+  const [schriftBereit, schriftFehler] = useFonts({
     Outfit_400Regular,
     Outfit_500Medium,
     Outfit_600SemiBold,
@@ -66,9 +67,20 @@ export default function App() {
   const [sheet, setSheet] = useState<SheetName>(null);
   const [stats, setStats] = useState<Stats>(DEFAULT_STATS);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
-  const [ergebnis, setErgebnis] = useState<{ game: GameState; archiv: boolean; vorherBest?: number } | null>(null);
-  const [freiesSpiel, setFreiesSpiel] = useState<GameState | null>(null);
-  const [tagesSpiel, setTagesSpiel] = useState<GameState | null>(null);
+  const [ergebnis, setErgebnis] = useState<Ergebnis | null>(null);
+  /** Nummer des heutigen Rätsels — wechselt um Mitternacht, auch bei offener App. */
+  const [heute, setHeute] = useState(() => puzzleNumber());
+
+  /**
+   * Gespeicherte Partien liegen in einem Ref statt im Zustand: Sie ändern sich
+   * mit jedem Zug, und jeder Zug sollte nicht die ganze App neu zeichnen.
+   * Der Startbildschirm liest sie beim Zurückkehren.
+   */
+  const gespeichert = useRef<SavedGames>({ daily: null, endless: null, zen: null });
+  const statsRef = useRef(stats);
+  statsRef.current = stats;
+  /** Ergebnis, das schon verbucht, aber noch nicht gezeigt ist. */
+  const ausstehend = useRef<Ergebnis | null>(null);
   const zaehler = useRef(1);
 
   const zeige = useCallback((s: ScreenSpec) => {
@@ -78,18 +90,12 @@ export default function App() {
   useEffect(() => {
     let abgebrochen = false;
     (async () => {
-      const [s, e, frei, tages] = await Promise.all([
-        loadStats(),
-        loadSettings(),
-        loadGame('free'),
-        loadGame('daily'),
-      ]);
+      const [s, e, spiele] = await Promise.all([loadStats(), loadSettings(), loadSavedGames()]);
       if (abgebrochen) return;
-      setStats({ ...s, streak: currentStreak(s) });
+      setStats(s);
       setSettings(e);
+      gespeichert.current = spiele;
       feedback.configure(e.haptics, e.sound);
-      setFreiesSpiel(frei);
-      setTagesSpiel(tages);
       // Beim allerersten Start zeigt das Spiel sich selbst, statt ein Menü
       // anzubieten, das noch niemand versteht.
       if (!e.tutorialDone) zeige({ name: 'tutorial' });
@@ -101,8 +107,24 @@ export default function App() {
     };
   }, [zeige]);
 
+  useEffect(() => {
+    const id = setInterval(() => {
+      const n = puzzleNumber();
+      setHeute((alt) => (alt === n ? alt : n));
+    }, 15_000);
+    return () => clearInterval(id);
+  }, []);
+
   const dunkel = settings.theme === 'auto' ? systemTheme !== 'light' : settings.theme === 'dark';
   const palette = dunkel ? DARK : LIGHT;
+
+  /** Statistik mit der für heute gültigen Serie — ändert sich auch um Mitternacht. */
+  const anzeigeStats = useMemo(
+    () => ({ ...stats, streak: currentStreak(stats) }),
+    // heute ist Absicht: Um Mitternacht muss die Serie neu bewertet werden.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [stats, heute],
+  );
 
   const aendereEinstellungen = useCallback((neu: Settings) => {
     setSettings(neu);
@@ -119,50 +141,65 @@ export default function App() {
     (mode: Mode) => {
       setErgebnis(null);
       if (mode === 'daily') {
-        const erledigt = dailyDone(stats);
+        const erledigt = dailyDone(statsRef.current);
         if (erledigt) {
           setErgebnis({ game: archivedDailyGame(erledigt), archiv: true });
           return;
         }
-        // Über Mitternacht offen gelassen? Dann gehört der gespeicherte Stand
-        // zu gestern und wird verworfen, statt fortgesetzt.
-        const laufend = isTodaysDaily(tagesSpiel) ? tagesSpiel : null;
-        if (!laufend && tagesSpiel) {
-          setTagesSpiel(null);
+        const laufend = gespeichert.current.daily;
+        // Über Mitternacht offen gelassen? Dann gehört der Stand zu gestern.
+        if (laufend && !isTodaysDaily(laufend)) {
+          gespeichert.current.daily = null;
           saveGame('daily', null);
         }
-        zeige({ name: 'game', mode, fortsetzen: laufend ?? undefined });
+        zeige({ name: 'game', mode, fortsetzen: gespeichert.current.daily ?? undefined });
         return;
       }
-      setFreiesSpiel(null);
-      saveGame('free', null);
+      gespeichert.current[mode] = null;
+      saveGame(mode, null);
       zeige({ name: 'game', mode });
     },
-    [stats, tagesSpiel, zeige],
+    [zeige],
   );
 
-  const setzeFort = useCallback(() => {
-    if (!freiesSpiel) return;
-    setErgebnis(null);
-    zeige({ name: 'game', mode: freiesSpiel.mode, fortsetzen: freiesSpiel });
-  }, [freiesSpiel, zeige]);
+  const setzeFort = useCallback(
+    (mode: Mode) => {
+      const game = gespeichert.current[mode];
+      if (!game) return;
+      setErgebnis(null);
+      zeige({ name: 'game', mode, fortsetzen: game });
+    },
+    [zeige],
+  );
 
-  const merke = useCallback((slot: SaveSlot, game: GameState | null) => {
-    saveGame(slot, game);
-    if (slot === 'daily') setTagesSpiel(game);
-    else setFreiesSpiel(game);
+  /** Nach jedem Zug — sofort, nicht erst nach der Animation. */
+  const merke = useCallback((game: GameState) => {
+    gespeichert.current[game.mode] = game;
+    saveGame(game.mode, game);
   }, []);
 
-  const beende = useCallback(
-    (game: GameState) => {
-      const vorherBest = stats.bestScore[game.mode] ?? 0;
-      const neu = recordGame(stats, game);
-      setStats(neu);
-      saveStats(neu);
-      setErgebnis({ game, archiv: false, vorherBest });
-    },
-    [stats],
-  );
+  /**
+   * Spielende: sofort verbuchen, erst später zeigen. Wer während der letzten
+   * Animation die Partie verlässt, verliert so weder Ergebnis noch Bestwert —
+   * und das Tagesrätsel ist verbucht, bevor irgendetwas schiefgehen kann.
+   */
+  const spielVorbei = useCallback((game: GameState) => {
+    const vorher = statsRef.current;
+    const vorherBest = vorher.bestScore[game.mode] ?? 0;
+    const neu = recordGame(vorher, game);
+    statsRef.current = neu;
+    setStats(neu);
+    saveStats(neu);
+    gespeichert.current[game.mode] = null;
+    saveGame(game.mode, null);
+    ausstehend.current = { game, archiv: false, vorherBest };
+  }, []);
+
+  const zeigeErgebnis = useCallback(() => {
+    if (!ausstehend.current) return;
+    setErgebnis(ausstehend.current);
+    ausstehend.current = null;
+  }, []);
 
   const tutorialFertig = useCallback(() => {
     aendereEinstellungen({ ...settings, tutorialDone: true });
@@ -170,14 +207,15 @@ export default function App() {
   }, [settings, aendereEinstellungen, zeige]);
 
   const zumMenue = useCallback(() => {
-    setErgebnis(null);
+    // Ein verbuchtes, aber noch nicht gezeigtes Ergebnis erscheint im Menü.
+    setErgebnis(ausstehend.current);
+    ausstehend.current = null;
     if (screen.name !== 'home') zeige({ name: 'home' });
   }, [screen.name, zeige]);
 
   /**
-   * Android-Zurück-Taste. Ohne das beendete sie die App von überall aus —
-   * auch mitten in einer Partie. Jetzt schließt sie, was obenauf liegt:
-   * Fenster, Ergebnis, Spiel. Erst im Menü verlässt sie die App.
+   * Android-Zurück-Taste: schließt, was obenauf liegt — Fenster, Ergebnis,
+   * Spiel. Erst im Menü verlässt sie die App.
    */
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -198,11 +236,15 @@ export default function App() {
     return () => sub.remove();
   }, [sheet, ergebnis, screen.name, tutorialFertig, zumMenue]);
 
-  if (!bereit || !schriftBereit) {
-    // Erst zeichnen, wenn Daten und Schrift da sind — sonst springt das
-    // Layout beim Schriftwechsel sichtbar um.
+  // Erst zeichnen, wenn Daten und Schrift da sind — sonst springt das Layout
+  // beim Schriftwechsel. Lädt die Schrift nicht, geht es mit der Systemschrift
+  // weiter statt mit einem schwarzen Bildschirm für immer.
+  if (!bereit || (!schriftBereit && !schriftFehler)) {
     return <View style={[styles.root, { backgroundColor: DARK.bg }]} />;
   }
+
+  const tagesStand = isTodaysDaily(gespeichert.current.daily) ? gespeichert.current.daily : null;
+  const pausiert = (['endless', 'zen'] as Mode[]).filter((m) => gespeichert.current[m]);
 
   return (
     <SafeAreaProvider>
@@ -214,10 +256,10 @@ export default function App() {
             <HomeScreen
               palette={palette}
               dark={dunkel}
-              stats={stats}
+              stats={anzeigeStats}
               heuteGespielt={dailyDone(stats)}
-              tagesStand={tagesSpiel}
-              gespeicherterModus={freiesSpiel?.mode ?? null}
+              tagesStand={tagesStand}
+              pausiert={pausiert}
               showShapes={settings.colorAssist}
               onStart={starte}
               onResume={setzeFort}
@@ -235,7 +277,8 @@ export default function App() {
               settings={settings}
               tutorial={{ steps: TUTORIAL, onDone: tutorialFertig }}
               onExit={tutorialFertig}
-              onFinish={() => {}}
+              onGameOver={() => {}}
+              onShowResult={() => {}}
               onPersist={() => {}}
             />
           </ScreenFade>
@@ -248,8 +291,9 @@ export default function App() {
               settings={settings}
               initialGame={screen.fortsetzen ?? null}
               onExit={zumMenue}
-              onFinish={beende}
-              onPersist={(g) => merke(screen.mode === 'daily' ? 'daily' : 'free', g)}
+              onGameOver={spielVorbei}
+              onShowResult={zeigeErgebnis}
+              onPersist={merke}
             />
           </ScreenFade>
         )}
@@ -258,7 +302,7 @@ export default function App() {
           <ResultSheet
             key={`${ergebnis.game.mode}-${ergebnis.game.score}-${ergebnis.archiv}`}
             game={ergebnis.game}
-            stats={stats}
+            stats={anzeigeStats}
             palette={palette}
             archived={ergebnis.archiv}
             previousBest={ergebnis.vorherBest}
@@ -267,14 +311,9 @@ export default function App() {
           />
         ) : null}
 
-        {sheet === 'stats' ? <StatsSheet stats={stats} palette={palette} onClose={() => setSheet(null)} /> : null}
+        {sheet === 'stats' ? <StatsSheet stats={anzeigeStats} palette={palette} onClose={() => setSheet(null)} /> : null}
         {sheet === 'settings' ? (
-          <SettingsSheet
-            settings={settings}
-            palette={palette}
-            onChange={aendereEinstellungen}
-            onClose={() => setSheet(null)}
-          />
+          <SettingsSheet settings={settings} palette={palette} onChange={aendereEinstellungen} onClose={() => setSheet(null)} />
         ) : null}
         {sheet === 'howto' ? (
           <HowToSheet

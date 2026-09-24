@@ -302,11 +302,22 @@ export function playMove(
   };
 }
 
-/** Vorschau: Was würde dieser Zug einbringen? Für den Hinweis-Knopf im Zen-Modus. */
-export function previewMove(state: GameState, col: number): number {
+/**
+ * Wirkung eines Zuges, ohne ihn auszuführen: Punkte und Landeplatz, oder
+ * null bei voller Spalte. Grundlage für Tipp und Balance-Messung.
+ */
+export function evaluateMove(
+  state: GameState,
+  col: number,
+): { points: number; landed: Position } | null {
   const placed = drop(state.board, col, state.queue[0]);
-  if (!placed) return -1;
-  return resolve(placed.board, placed.landed).points;
+  if (!placed) return null;
+  return { points: resolve(placed.board, placed.landed).points, landed: placed.landed };
+}
+
+/** Punkte eines Zuges, -1 bei voller Spalte. */
+export function previewMove(state: GameState, col: number): number {
+  return evaluateMove(state, col)?.points ?? -1;
 }
 
 /**
@@ -324,10 +335,10 @@ export function suggestColumn(state: GameState): number | null {
   let best: number | null = null;
   let bestWert = -Infinity;
   for (let col = 0; col < state.board[0].length; col++) {
-    const placed = drop(state.board, col, level);
-    if (!placed) continue;
-    const points = resolve(placed.board, placed.landed).points;
-    const { row } = placed.landed;
+    const zug = evaluateMove(state, col);
+    if (!zug) continue;
+    const { points } = zug;
+    const { row } = zug.landed;
     let nachbarn = 0;
     for (const [dr, dc] of [[1, 0], [0, -1], [0, 1]]) {
       const r = row + dr;

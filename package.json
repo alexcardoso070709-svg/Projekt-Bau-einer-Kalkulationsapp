@@ -10,6 +10,7 @@
     "expo-font": "~57.0.0",
     "expo-haptics": "~57.0.3",
     "expo-linear-gradient": "~57.0.2",
+    "expo-localization": "~57.0.2",
     "expo-splash-screen": "~57.0.0",
     "expo-status-bar": "~57.0.1",
     "expo-system-ui": "~57.0.4",
@@ -62,7 +63,8 @@
     "collectCoverageFrom": [
       "src/game/**/*.ts",
       "!src/game/__tests__/**"
-    ]
+    ],
+    "globalSetup": "./jest.global-setup.js"
   },
   "description": "Ein sprachfreies Farb-Merge-Puzzle mit täglichem Rätsel. Offline, werbefrei, ohne Konto."
 }

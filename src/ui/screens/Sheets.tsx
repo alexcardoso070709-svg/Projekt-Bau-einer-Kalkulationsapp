@@ -10,7 +10,7 @@ import { Text } from '../components/Text';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { dateKey } from '../../game/daily';
+import { puzzleNumber } from '../../game/daily';
 import { formatNumber } from '../../game/share';
 import { Level } from '../../game/types';
 import { numberLocale, strings } from '../../i18n/strings';
@@ -67,7 +67,6 @@ export function StatsSheet({
   palette: Palette;
   onClose: () => void;
 }) {
-  const tage = Object.keys(stats.daily).sort();
   const schnitt = stats.played > 0 ? Math.round(stats.totalScore / stats.played) : 0;
 
   // Die letzten 35 Tage als Raster — auf einen Blick sichtbar, wie treu
@@ -76,7 +75,7 @@ export function StatsSheet({
   const heute = new Date();
   const raster = Array.from({ length: 35 }, (_, i) => {
     const d = new Date(heute.getFullYear(), heute.getMonth(), heute.getDate() - (34 - i));
-    const key = dateKey(d);
+    const key = String(puzzleNumber(d));
     return { key, ergebnis: stats.daily[key] ?? null };
   });
 

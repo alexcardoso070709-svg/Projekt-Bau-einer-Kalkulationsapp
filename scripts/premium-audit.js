@@ -13,7 +13,7 @@
  *   node scripts/premium-audit.js http://localhost:8110/ [nur=1,2,5]
  *
  * Ein bereits installiertes Chromium lässt sich über CHROMIUM_PATH angeben.
- * Jede Änderung am Spiel sollte hier weiter 12 von 12 erreichen.
+ * Jede Änderung am Spiel sollte hier alle Ziele weiter erreichen.
  */
 const { chromium } = require('playwright');
 
@@ -333,6 +333,81 @@ const PRUEFUNGEN = [
     return [/PRISMA/.test(ablage), /PRISMA/.test(ablage) ? 'Ergebnis landet in der Zwischenablage' : 'Knopf ohne Wirkung'];
   }],
 ];
+
+PRUEFUNGEN.push(
+  [13, 'Verlassen im letzten Zug kostet nichts', async (b) => {
+    // Tagesrätsel beim 89. Zug, der 90. beendet es. Sofort danach Menü.
+    const brett = leer();
+    const n = raetselNr();
+    const { ctx, page } = await neueSeite(b, {
+      speicher: { 'prisma.save.daily.v1': JSON.stringify(spielstand({ mode: 'daily', moveLimit: 90, moves: 89, puzzleNumber: n, board: brett, score: 777 })) },
+    });
+    await page.getByText(/^(Tagesrätsel|Daily)$/).first().click();
+    await page.waitForTimeout(700);
+    await klickeSpalte(page, 2);
+    await page.waitForTimeout(60);
+    await page.getByRole('button', { name: /^(Menü|Menu)$/ }).first().click();
+    await page.waitForTimeout(900);
+    const ergebnis = await page.locator('[data-testid="result-sheet"]').count();
+    const stats = JSON.parse(await page.evaluate(() => localStorage.getItem('prisma.stats.v1') || '{}'));
+    await page.getByRole('button', { name: /^(Menü|Menu)$/ }).first().click().catch(() => {});
+    await page.waitForTimeout(600);
+    await page.getByText(/^(Tagesrätsel|Daily)$/).first().click();
+    await page.waitForTimeout(800);
+    const neuesSpiel = await zuegeUebrig(page);
+    await ctx.close();
+    const verbucht = !!(stats.daily && stats.daily[String(n)]);
+    const maengel = [];
+    if (!verbucht) maengel.push('Ergebnis nicht verbucht');
+    if (!ergebnis) maengel.push('Ergebnis nicht gezeigt');
+    if (neuesSpiel !== null) maengel.push('Rätsel erneut spielbar');
+    return [!maengel.length, maengel.join(', ') || 'verbucht, im Menü gezeigt, nicht wiederholbar'];
+  }],
+
+  [14, 'Abbrechen im Zug nimmt ihn nicht zurück', async (b) => {
+    const { ctx, page } = await neueSeite(b);
+    await page.getByText(/^(Tagesrätsel|Daily)$/).first().click();
+    await page.waitForTimeout(700);
+    const vor = await zuegeUebrig(page);
+    await klickeSpalte(page, 1);
+    await page.waitForTimeout(40);
+    await page.getByRole('button', { name: /^(Menü|Menu)$/ }).first().click();
+    await page.waitForTimeout(700);
+    await page.getByText(/^(Tagesrätsel|Daily)$/).first().click();
+    await page.waitForTimeout(800);
+    const nach = await zuegeUebrig(page);
+    await ctx.close();
+    return [nach === vor - 1, `vorher ${vor} Züge übrig, nach Abbruch und Rückkehr ${nach}`];
+  }],
+
+  [15, 'Zen löscht keine pausierte Endlos-Partie', async (b) => {
+    const { ctx, page } = await neueSeite(b, { speicher: { 'prisma.save.v1': JSON.stringify(spielstand({ score: 4321 })) } });
+    await page.getByText(/^Zen$/).first().click();
+    await page.waitForTimeout(700);
+    await klickeSpalte(page, 0);
+    await page.waitForTimeout(700);
+    await page.getByRole('button', { name: /^(Menü|Menu)$/ }).first().click();
+    await page.waitForTimeout(800);
+    const endlos = JSON.parse(await page.evaluate(() => localStorage.getItem('prisma.save.v1') || 'null'));
+    const knoepfe = await page.getByText(/^(Fortsetzen|Resume)$/).count();
+    await ctx.close();
+    const ok = endlos && endlos.mode === 'endless' && endlos.score === 4321 && knoepfe === 2;
+    return [ok, ok ? 'beide Partien bleiben, zwei Fortsetzen-Knöpfe' : `Endlos: ${endlos ? endlos.score : 'weg'}, Knöpfe: ${knoepfe}`];
+  }],
+
+  [16, 'Startet auch ohne ladbare Schrift', async (b) => {
+    const ctx = await b.newContext({ viewport: { width: 393, height: 852 } });
+    await ctx.addInitScript((e) => { localStorage.setItem('prisma.settings.v1', e); }, JSON.stringify(TUTORIAL_ERLEDIGT));
+    const page = await ctx.newPage();
+    await page.route(/\.(ttf|otf)(\?.*)?$/, (r) => r.abort());
+    await page.route(/^data:font/, (r) => r.abort()).catch(() => {});
+    await page.goto(BASIS, { waitUntil: 'networkidle' });
+    await page.waitForTimeout(3500);
+    const da = await page.locator('[data-testid="screen-home"]').count();
+    await ctx.close();
+    return [da > 0, da ? 'Menü erscheint mit Systemschrift' : 'schwarzer Bildschirm'];
+  }],
+);
 
 (async () => {
   const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});

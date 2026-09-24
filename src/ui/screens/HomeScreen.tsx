@@ -83,11 +83,11 @@ export interface HomeScreenProps {
   heuteGespielt: DailyResult | null;
   /** Laufendes, noch nicht beendetes Tagesrätsel. */
   tagesStand: GameState | null;
-  /** Modus der pausierten freien Partie, falls es eine gibt. */
-  gespeicherterModus: Mode | null;
+  /** Freie Modi mit pausierter Partie. */
+  pausiert: Mode[];
   showShapes: boolean;
   onStart: (mode: Mode) => void;
-  onResume: () => void;
+  onResume: (mode: Mode) => void;
   onStats: () => void;
   onSettings: () => void;
   onHowTo: () => void;
@@ -99,7 +99,7 @@ export function HomeScreen({
   stats,
   heuteGespielt,
   tagesStand,
-  gespeicherterModus,
+  pausiert,
   showShapes,
   onStart,
   onResume,
@@ -133,18 +133,18 @@ export function HomeScreen({
       </Animated.View>
 
       <View style={styles.modes}>
-        {gespeicherterModus ? (
-          <Animated.View entering={FadeInDown.delay(100).duration(380)} style={styles.full}>
+        {pausiert.map((modus) => (
+          <Animated.View key={modus} entering={FadeInDown.delay(100).duration(380)} style={styles.full}>
             <Button
               label={strings.resume}
-              sublabel={gespeicherterModus === 'zen' ? strings.zen : strings.endless}
+              sublabel={modus === 'zen' ? strings.zen : strings.endless}
               palette={palette}
               variant="secondary"
-              onPress={onResume}
+              onPress={() => onResume(modus)}
               block
             />
           </Animated.View>
-        ) : null}
+        ))}
 
         {/* Tagesrätsel */}
         <Animated.View entering={FadeInDown.delay(140).duration(400)} style={styles.full}>

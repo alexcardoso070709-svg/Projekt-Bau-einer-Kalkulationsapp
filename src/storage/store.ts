@@ -1,22 +1,13 @@
 /**
  * Dauerhafte Speicherung — ausschließlich auf dem Gerät.
  *
- * Es gibt keinen Server, kein Konto, keine Synchronisierung. Die App
- * funktioniert im Flugzeug wie zu Hause, und in der Datenschutzangabe des
- * App Store steht „Es werden keine Daten erfasst".
- *
- * Die Logik dahinter (Serie, Archiv) liegt in stats.ts und ist dort getestet;
- * hier geschieht nur Lesen und Schreiben.
+ * Kein Server, kein Konto, keine Synchronisierung. In der Datenschutzangabe
+ * des App Store steht dadurch „Es werden keine Daten erfasst". Die Logik
+ * dahinter liegt getestet in stats.ts; hier geschieht nur Lesen und Schreiben.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { GameState } from '../game/types';
-import {
-  DEFAULT_SETTINGS,
-  DEFAULT_STATS,
-  Settings,
-  Stats,
-  isTodaysDaily,
-} from './stats';
+import { GameState, Mode } from '../game/types';
+import { DEFAULT_SETTINGS, Settings, Stats, isTodaysDaily, normalizeStats } from './stats';
 
 export * from './stats';
 
@@ -24,29 +15,28 @@ const KEY_STATS = 'prisma.stats.v1';
 const KEY_SETTINGS = 'prisma.settings.v1';
 
 /**
- * Zwei getrennte Spielstände: einer für Endlos und Zen, einer allein für das
- * Tagesrätsel. Früher teilten sie sich einen Platz — wer mitten im
- * Tagesrätsel eine Endlos-Partie begann, verlor es und konnte dann von vorn
- * anfangen. Ein Zweitversuch durch die Hintertür.
+ * Ein Speicherplatz je Modus. Früher teilten sich Endlos und Zen einen Platz:
+ * Wer eine pausierte Endlos-Partie hatte und Zen antippte, verlor sie.
  */
-export type SaveSlot = 'free' | 'daily';
-const KEY_SAVE: Record<SaveSlot, string> = {
-  free: 'prisma.save.v1',
+const KEY_SAVE: Record<Mode, string> = {
+  endless: 'prisma.save.v1',
+  zen: 'prisma.save.zen.v1',
   daily: 'prisma.save.daily.v1',
 };
 
-async function readJson<T extends object>(key: string, fallback: T): Promise<T> {
+export type SavedGames = Record<Mode, GameState | null>;
+
+async function read(key: string): Promise<unknown> {
   try {
     const raw = await AsyncStorage.getItem(key);
-    if (!raw) return fallback;
-    return { ...fallback, ...(JSON.parse(raw) as object) } as T;
+    return raw ? JSON.parse(raw) : null;
   } catch {
     // Beschädigte Daten dürfen nie den Start verhindern.
-    return fallback;
+    return null;
   }
 }
 
-async function writeJson(key: string, value: unknown): Promise<void> {
+async function write(key: string, value: unknown): Promise<void> {
   try {
     await AsyncStorage.setItem(key, JSON.stringify(value));
   } catch {
@@ -54,42 +44,48 @@ async function writeJson(key: string, value: unknown): Promise<void> {
   }
 }
 
-export const loadStats = () => readJson<Stats>(KEY_STATS, DEFAULT_STATS);
-export const saveStats = (s: Stats) => writeJson(KEY_STATS, s);
-export const loadSettings = () => readJson<Settings>(KEY_SETTINGS, DEFAULT_SETTINGS);
-export const saveSettings = (s: Settings) => writeJson(KEY_SETTINGS, s);
-
-export function slotFor(game: GameState): SaveSlot {
-  return game.mode === 'daily' ? 'daily' : 'free';
+export async function loadStats(): Promise<Stats> {
+  const raw = await read(KEY_STATS);
+  return normalizeStats(raw && typeof raw === 'object' ? (raw as object) : {});
 }
 
-/** Spielstand sichern (oder mit null löschen), damit ein Anruf keine Partie kostet. */
-export function saveGame(slot: SaveSlot, game: GameState | null): Promise<void> {
-  return game
-    ? writeJson(KEY_SAVE[slot], game)
-    : AsyncStorage.removeItem(KEY_SAVE[slot]).catch(() => {});
+export const saveStats = (s: Stats) => write(KEY_STATS, s);
+
+export async function loadSettings(): Promise<Settings> {
+  const raw = await read(KEY_SETTINGS);
+  return { ...DEFAULT_SETTINGS, ...(raw && typeof raw === 'object' ? (raw as object) : {}) };
 }
 
-export async function loadGame(slot: SaveSlot): Promise<GameState | null> {
-  try {
-    const raw = await AsyncStorage.getItem(KEY_SAVE[slot]);
-    if (!raw) return null;
-    const game = JSON.parse(raw) as GameState;
-    if (game.over) return null;
-    // Ein Tagesrätsel von gestern ist wertlos: Sein Seed gehört zu einem
-    // anderen Tag.
-    if (slot === 'daily' && !isTodaysDaily(game)) return null;
-    return game;
-  } catch {
-    return null;
+export const saveSettings = (s: Settings) => write(KEY_SETTINGS, s);
+
+/** Spielstand eines Modus sichern oder mit null löschen. */
+export function saveGame(mode: Mode, game: GameState | null): Promise<void> {
+  return game ? write(KEY_SAVE[mode], game) : AsyncStorage.removeItem(KEY_SAVE[mode]).catch(() => {});
+}
+
+/**
+ * Alle gespeicherten Partien. Jede wird nach ihrem eigenen Modus einsortiert,
+ * nicht nach dem Platz, an dem sie lag — so wandert eine Zen-Partie aus der
+ * älteren, gemeinsamen Ablage an ihren richtigen Platz.
+ */
+export async function loadSavedGames(): Promise<SavedGames> {
+  const result: SavedGames = { daily: null, endless: null, zen: null };
+  for (const platz of Object.keys(KEY_SAVE) as Mode[]) {
+    const game = (await read(KEY_SAVE[platz])) as GameState | null;
+    if (!game || game.over || !(game.mode in KEY_SAVE)) continue;
+    if (game.mode === 'daily' && !isTodaysDaily(game)) continue;
+    if (!result[game.mode]) result[game.mode] = game;
+    if (game.mode !== platz) {
+      await saveGame(game.mode, game);
+      await saveGame(platz, null);
+    }
   }
+  return result;
 }
 
 /** Alles löschen — für einen Neuanfang aus den Einstellungen. */
 export async function resetAll(): Promise<void> {
   await Promise.all(
-    [KEY_STATS, KEY_SETTINGS, KEY_SAVE.free, KEY_SAVE.daily].map((k) =>
-      AsyncStorage.removeItem(k).catch(() => {}),
-    ),
+    [KEY_STATS, KEY_SETTINGS, ...Object.values(KEY_SAVE)].map((k) => AsyncStorage.removeItem(k).catch(() => {})),
   );
 }

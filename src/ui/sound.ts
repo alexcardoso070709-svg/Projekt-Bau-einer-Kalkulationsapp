@@ -84,7 +84,9 @@ function spiele(name: Klang): void {
   try {
     // Zurückspulen, damit ein schnell wiederholter Klang erneut von vorn
     // beginnt statt stumm zu bleiben, weil er schon durchgelaufen ist.
-    p.seekTo(0);
+    // seekTo liefert ein Promise; eine Ablehnung (Spieler noch nicht bereit,
+    // Browser ohne Berührung) darf nicht als unbehandelter Fehler enden.
+    Promise.resolve(p.seekTo(0)).catch(() => {});
     p.play();
   } catch {
     // Verweigerte Wiedergabe (etwa ein Browser vor der ersten Berührung)

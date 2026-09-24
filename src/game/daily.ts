@@ -21,13 +21,18 @@ export function dateKey(date: Date = new Date()): string {
 }
 
 /**
- * Fortlaufende Nummer des Tagesrätsels. Rechnet über lokale Mitternacht,
- * damit Sommerzeitumstellungen die Zählung nicht verschieben.
+ * Fortlaufende Nummer des Tagesrätsels.
+ *
+ * Gerechnet wird in Kalendertagen: Jahr, Monat und Tag der lokalen Zeit
+ * werden als UTC-Datum gedeutet, in dem es keine Sommerzeit gibt. Eine
+ * frühere Fassung zog lokale Mitternächte in Millisekunden voneinander ab
+ * und rundete ab — während der Sommerzeit fehlte dabei eine Stunde, und die
+ * Nummer lag von Ende März bis Ende Oktober einen Tag daneben.
  */
 export function puzzleNumber(date: Date = new Date()): number {
-  const today = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-  const epoch = new Date(EPOCH_YEAR, EPOCH_MONTH, EPOCH_DAY).getTime();
-  return Math.floor((today - epoch) / 86_400_000) + 1;
+  const tag = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  const start = Date.UTC(EPOCH_YEAR, EPOCH_MONTH, EPOCH_DAY);
+  return Math.round((tag - start) / 86_400_000) + 1;
 }
 
 /** Seed eines Tagesrätsels. Gleiche Nummer -> gleiches Spielfeld, weltweit. */

@@ -1,4 +1,4 @@
-import { dateKey, msUntilNextPuzzle, puzzleNumber, seedForPuzzle } from '../daily';
+import { dateForPuzzle, dateKey, msUntilNextPuzzle, puzzleNumber, seedForPuzzle } from '../daily';
 import { createGame, playMove } from '../engine';
 import { Rng, hashString } from '../rng';
 import { COLS } from '../types';
@@ -134,5 +134,27 @@ describe('Zufallsgenerator', () => {
       game = out.state;
     }
     expect(belegt.size).toBe(COLS);
+  });
+});
+
+describe('Rätselnummer in allen Zeitzonen', () => {
+  const ZONEN = ['Europe/Berlin', 'America/New_York', 'Australia/Sydney', 'Asia/Kolkata', 'UTC'];
+  const vorher = process.env.TZ;
+  afterAll(() => {
+    process.env.TZ = vorher;
+  });
+
+  it.each(ZONEN)('zählt in %s jeden Tag genau einmal, auch über die Zeitumstellung', (zone) => {
+    process.env.TZ = zone;
+    // Zwei volle Jahre, zu drei Tageszeiten: kurz nach Mitternacht, mittags,
+    // kurz vor Mitternacht. Jeder Kalendertag muss genau eine Nummer haben,
+    // lückenlos und ohne Doppelung.
+    for (let t = 0; t < 730; t++) {
+      for (const stunde of [0, 12, 23]) {
+        const d = new Date(2026, 0, 1 + t, stunde, stunde === 0 ? 5 : 55);
+        expect({ zone, tag: t, n: puzzleNumber(d) }).toEqual({ zone, tag: t, n: t + 1 });
+      }
+      expect(puzzleNumber(dateForPuzzle(t + 1))).toBe(t + 1);
+    }
   });
 });

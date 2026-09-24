@@ -67,9 +67,12 @@ export interface GameScreenProps {
   /** Geskriptete Schritte statt freiem Spiel. */
   tutorial?: TutorialScript | null;
   onExit: () => void;
-  onFinish: (game: GameState) => void;
-  /** Wird nach jedem Zug gerufen, um den Spielstand zu sichern. */
-  onPersist: (game: GameState | null) => void;
+  /** Sichert den Stand — sofort beim Zug, nicht erst nach der Animation. */
+  onPersist: (game: GameState) => void;
+  /** Spielende verbuchen, noch bevor die letzte Animation läuft. */
+  onGameOver: (game: GameState) => void;
+  /** Ergebnisfenster zeigen, wenn die letzte Animation vorbei ist. */
+  onShowResult: () => void;
 }
 
 export function GameScreen({
@@ -80,8 +83,9 @@ export function GameScreen({
   initialGame,
   tutorial = null,
   onExit,
-  onFinish,
   onPersist,
+  onGameOver,
+  onShowResult,
 }: GameScreenProps) {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
@@ -234,6 +238,16 @@ export function GameScreen({
 
       const { result, state: next } = outcome;
 
+      // Der Zug gilt ab jetzt — auch wenn jemand die Partie verlässt, bevor
+      // die Animation durch ist. Früher wurde erst danach gesichert: Wer
+      // mitten im Zug ging, bekam ihn zurück, im Tagesrätsel ein verdecktes
+      // Rückgängig.
+      gameRef.current = next;
+      if (!tutorial) {
+        if (next.over) onGameOver(next);
+        else onPersist(next);
+      }
+
       // 1. Der Stein fällt, die Vorschau rückt sofort nach.
       const n = ++nonce.current;
       setFalling({ col, row: result.landed.row, level: g.queue[0] as Level, nonce: n });
@@ -304,8 +318,7 @@ export function GameScreen({
         setFloats([]);
       }, 900);
 
-      // 4. Zustand übernehmen.
-      gameRef.current = next;
+      // 4. Anzeige nachziehen.
       setDisplay(next.board);
       setShownScore(next.score);
       setGame(next);
@@ -318,17 +331,14 @@ export function GameScreen({
       if (next.over) {
         pendingRef.current = [];
         feedback.gameOver();
-        onPersist(null);
         dim.value = withTiming(1, { duration: 450 });
         await sleep(650);
-        if (alive.current) onFinish(next);
-      } else {
-        onPersist(next);
+        if (alive.current) onShowResult();
       }
     },
     // warte liest nur Refs und muss nicht in die Abhängigkeiten.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [tutorial, mode, abweisen, erschuettern, zeigeKette, naechsterSchritt, onFinish, onPersist, dim],
+    [tutorial, mode, abweisen, erschuettern, zeigeKette, naechsterSchritt, onGameOver, onShowResult, onPersist, dim],
   );
 
   const spieleZug = useCallback(
@@ -426,7 +436,7 @@ export function GameScreen({
                 ))}
               </View>
             ) : (
-              <Text style={[styles.headerTitle, { color: palette.textMuted }]}>{titel}</Text>
+              <Text maxFontSizeMultiplier={1.2} style={[styles.headerTitle, { color: palette.textMuted }]}>{titel}</Text>
             )}
             <Counter value={shownScore} style={[styles.score, { color: palette.text }]} />
           </View>
@@ -434,10 +444,10 @@ export function GameScreen({
           <View style={styles.headerButton}>
             {zuegeUebrig !== null && !tutorial ? (
               <View style={styles.movesBox}>
-                <Text testID="moves-left" style={[styles.movesValue, { color: palette.text }]}>
+                <Text maxFontSizeMultiplier={1.2} testID="moves-left" style={[styles.movesValue, { color: palette.text }]}>
                   {zuegeUebrig}
                 </Text>
-                <Text style={[styles.movesLabel, { color: palette.textFaint }]}>{strings.moves}</Text>
+                <Text maxFontSizeMultiplier={1.2} style={[styles.movesLabel, { color: palette.textFaint }]}>{strings.moves}</Text>
               </View>
             ) : null}
           </View>
@@ -479,7 +489,7 @@ export function GameScreen({
               style={[styles.chainBadge, { backgroundColor: palette.accent }, badgeStyle]}
             >
               <Icon name="chain" size={15} color="#FFFFFF" strokeWidth={2.4} />
-              <Text style={styles.chainText}>×{chainBadge}</Text>
+              <Text maxFontSizeMultiplier={1.2} style={styles.chainText}>×{chainBadge}</Text>
             </Animated.View>
           ) : null}
         </View>
@@ -566,7 +576,7 @@ function FooterButton({
       ]}
     >
       <Icon name={icon} size={18} color={palette.text} />
-      <Text style={[styles.footerLabel, { color: palette.text }]}>{label}</Text>
+      <Text maxFontSizeMultiplier={1.2} style={[styles.footerLabel, { color: palette.text }]}>{label}</Text>
     </Pressable>
   );
 }
@@ -590,7 +600,7 @@ function Chip({
       style={[styles.chip, { backgroundColor: palette.boardBg, borderColor: palette.border }]}
     >
       <Icon name={icon} size={16} color={palette.textMuted} inner={palette.bg} />
-      <Text style={[styles.chipValue, { color: palette.text }]}>{value}</Text>
+      <Text maxFontSizeMultiplier={1.2} style={[styles.chipValue, { color: palette.text }]}>{value}</Text>
     </View>
   );
 }
