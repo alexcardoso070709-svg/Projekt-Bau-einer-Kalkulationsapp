@@ -21,7 +21,7 @@ Was erledigt ist, ist abgehakt. Was offen ist, kann nur der Inhaber tun: Konten 
    - `docs/impressum.html`, `docs/datenschutz.html`, `docs/privacy.html`, `docs/index.html`: Name, Anschrift, E-Mail
    - `eas.json` → `submit.production.ios`: Apple-ID, App-Store-Connect-App-ID, Team-ID
    - `app.json`: Bundle-ID `com.irisagame.app` – ändern, falls bei Apple/Google schon vergeben (danach unveränderlich!)
-4. **Webseiten veröffentlichen.** GitHub → Settings → Pages → „Deploy from a branch", Branch `claude/stoic-fermi-3abbl1` (nach dem Zusammenführen `main`), Ordner `/docs`. Die Adresse ist Support- und Datenschutz-URL; unter `/spielen/` liegt zugleich die installierbare Web-App fürs iPhone (siehe README).
+4. **Webseiten veröffentlichen.** GitHub → Settings → Pages → „Deploy from a branch", Branch `main`, Ordner `/docs`. Die Adresse ist Support- und Datenschutz-URL; unter `/spielen/` liegt zugleich die installierbare Web-App fürs iPhone (siehe README).
 5. **Auf echten Geräten testen.** `npx expo start` → mit Expo Go scannen, oder `eas build --profile preview`. Einmal komplett durchspielen: Ton, Vibration, Zurück-Taste (Android), Stummschalter (iPhone).
 6. **Bauen und einreichen.**
    ```

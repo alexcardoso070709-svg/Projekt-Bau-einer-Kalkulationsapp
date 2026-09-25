@@ -33,7 +33,7 @@ Jede Farbe hat zusätzlich eine eigene Form. Unterstützt „Bewegung reduzieren
 **Neu in 1.0:** Erste Veröffentlichung.
 **Kategorie:** Spiele › Puzzle (zweitrangig: Gelegenheitsspiele)
 **Alter:** 4+ · **Preis:** kostenlos
-**Support-URL:** https://alexcardoso070709-svg.github.io/Projekt-Bau-einer-Kalkulationsapp/
+**Support-URL:** https://alexcardoso070709-svg.github.io/irisa-mobile-game/
 **Datenschutz-URL:** …/datenschutz.html
 
 ## Antworten für die Formulare

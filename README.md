@@ -119,9 +119,9 @@ dazu Symbol, Manifest und ein Service Worker, der die App nach dem ersten
 Öffnen komplett offline bereithält. Spielstände liegen nur auf dem Gerät.
 
 1. Einmalig auf GitHub: **Settings → Pages → Build and deployment**
-   Source „Deploy from a branch", Branch `claude/stoic-fermi-3abbl1`, Ordner `/docs`, **Save**.
+   Source „Deploy from a branch", Branch `main`, Ordner `/docs`, **Save**.
 2. Nach ein, zwei Minuten auf dem iPhone in **Safari** öffnen:
-   `https://alexcardoso070709-svg.github.io/Projekt-Bau-einer-Kalkulationsapp/spielen/`
+   `https://alexcardoso070709-svg.github.io/irisa-mobile-game/spielen/`
 3. Teilen-Symbol → **Zum Home-Bildschirm** → Hinzufügen.
 
 Ab dann startet Irisa vom Home-Bildschirm im Vollbild, auch im Flugmodus.
