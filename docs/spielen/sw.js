@@ -1,4 +1,4 @@
-const CACHE = 'irisa-6cf583cb423a';
+const CACHE = 'irisa-d003bde7fbfd';
 const DATEIEN = ['./', 'index.html', 'manifest.webmanifest', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', (e) => {

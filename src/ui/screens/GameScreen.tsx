@@ -99,6 +99,20 @@ export function GameScreen({
   );
   /** Maßgeblicher Stand für die Zugfolge — der Renderzustand hinkt hinterher. */
   const gameRef = useRef(game);
+  /**
+   * Vorausberechneter Stand für die Vorschau-Anzeige.
+   *
+   * Ohne ihn zeigte die Vorschau bei mehreren vorgemerkten Zügen für alle
+   * denselben Stein: Sie wurde nur beim tatsächlichen Ausführen aktualisiert,
+   * nicht schon beim bloßen Annehmen eines Zuges. Wer schnell zweimal tippte,
+   * während noch ein Zug lief, sah zweimal dieselbe Farbe angekündigt — der
+   * zweite Tipp bekam aber längst die übernächste, weil der erste Tipp die
+   * angekündigte schon für sich beansprucht hatte. Die Warteschlange selbst
+   * hängt nur von der Zahl der Züge ab, nicht vom Spielfeld — deshalb lässt
+   * sie sich hier mit dem echten `playMove` rein zur Vorschau vorspulen, ohne
+   * dass ein Zug wirklich stattfindet.
+   */
+  const vorschauRef = useRef(game);
 
   const [display, setDisplay] = useState(() => game.board);
   const [shownScore, setShownScore] = useState(game.score);
@@ -216,6 +230,7 @@ export function GameScreen({
     setSchritt(s);
     const neu = { ...tutorialGame(tutorial.steps[s]), score: gameRef.current.score };
     gameRef.current = neu;
+    vorschauRef.current = neu;
     setGame(neu);
     setDisplay(neu.board);
     setShownQueue(neu.queue);
@@ -257,6 +272,10 @@ export function GameScreen({
       // mitten im Zug ging, bekam ihn zurück, im Tagesrätsel ein verdecktes
       // Rückgängig.
       gameRef.current = next;
+      // Die Vorschau lief diesem Zug voraus (siehe vorschauRef) oder war
+      // schon deckungsgleich — beides trifft hier zu, dies hält sie fest
+      // synchron, statt sich auf lückenlose Vorausberechnung zu verlassen.
+      vorschauRef.current = next;
       if (!tutorial) {
         if (next.over) onGameOver(next);
         else onPersist(next);
@@ -363,7 +382,19 @@ export function GameScreen({
       if (busyRef.current) {
         // Im Tutorial nichts vormerken: Ein Doppeltipp würde sonst schon den
         // nächsten, noch unsichtbaren Schritt auslösen.
-        if (!tutorial && pendingRef.current.length < MAX_VORGEMERKT) pendingRef.current.push(col);
+        if (!tutorial && pendingRef.current.length < MAX_VORGEMERKT) {
+          // Der Zug wird erst später ausgeführt, aber die Vorschau muss ihn
+          // schon jetzt vorwegnehmen — sonst kündigt sie beim nächsten Tipp
+          // wieder denselben Stein an, den dieser hier sich gerade sichert.
+          const vorschau = playMove(vorschauRef.current, col);
+          if (vorschau) {
+            vorschauRef.current = vorschau.state;
+            pendingRef.current.push(col);
+            setShownQueue(vorschau.state.queue);
+          } else {
+            abweisen(col);
+          }
+        }
         return;
       }
       busyRef.current = true;
@@ -382,7 +413,7 @@ export function GameScreen({
         await zeigeEnde();
       }
     },
-    [fuehreAus, geschafft, tutorial, zeigeEnde],
+    [fuehreAus, geschafft, tutorial, zeigeEnde, abweisen],
   );
 
   /*
@@ -411,6 +442,7 @@ export function GameScreen({
       gameRef.current = next;
       setRestMs(timeLeftMs(next));
       if (next.over) {
+        vorschauRef.current = next;
         onGameOver(next);
         setGame(next);
         if (busyRef.current) zeitUmRef.current = true;
@@ -434,6 +466,7 @@ export function GameScreen({
     feedback.button();
     setRueckgaengig(history.current.length);
     gameRef.current = vorher;
+    vorschauRef.current = vorher;
     setGame(vorher);
     setDisplay(vorher.board);
     setShownScore(vorher.score);

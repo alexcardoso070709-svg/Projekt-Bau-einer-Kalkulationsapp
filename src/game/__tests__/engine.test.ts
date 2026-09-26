@@ -268,3 +268,30 @@ describe('Tipp ohne punktbringenden Zug', () => {
     expect(suggestColumn(game)).not.toBe(0);
   });
 });
+
+describe('Vorschau vorgemerkter Züge', () => {
+  // Die Oberfläche berechnet bei vorgemerkten Zügen die Warteschlange schon
+  // vor der eigentlichen Ausführung voraus (playMove auf einen "Schatten"-
+  // Spielstand angewandt), damit die Anzeige nie zwei aufeinanderfolgende
+  // Tipps mit demselben angekündigten Stein zeigt. Das funktioniert nur,
+  // weil die künftige Warteschlange nicht davon abhängt, in welche Spalte
+  // geworfen wird — nur vom Spielstand selbst (Seed, Zugzahl, RNG-Stand).
+  it('die künftige Warteschlange ist unabhängig von der gewählten Spalte', () => {
+    const basis = createGame({ mode: 'endless', seed: 99 });
+    const a = playMove(basis, 0)!;
+    const b = playMove(basis, 4)!;
+    expect(a.state.queue).toEqual(b.state.queue);
+    expect(a.state.rngCalls).toBe(b.state.rngCalls);
+  });
+
+  it('bleibt auch über mehrere vorausberechnete Züge hinweg gleich', () => {
+    const basis = createGame({ mode: 'endless', seed: 4711 });
+    const spaltenA = [0, 1, 2];
+    const spaltenB = [3, 4, 2];
+    let a = basis;
+    let b = basis;
+    for (const col of spaltenA) a = playMove(a, col)!.state;
+    for (const col of spaltenB) b = playMove(b, col)!.state;
+    expect(a.queue).toEqual(b.queue);
+  });
+});
