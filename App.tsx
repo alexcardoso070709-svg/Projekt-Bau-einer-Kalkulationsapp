@@ -28,6 +28,7 @@ import {
   archivedDailyGame,
   currentStreak,
   dailyDone,
+  earnHint,
   isTodaysDaily,
   loadSavedGames,
   loadSettings,
@@ -36,6 +37,7 @@ import {
   saveGame,
   saveSettings,
   saveStats,
+  spendHint,
 } from './src/storage/store';
 import * as feedback from './src/ui/feedback';
 import { DARK, LIGHT } from './src/ui/theme';
@@ -189,6 +191,27 @@ export default function App() {
   }, []);
 
   /**
+   * Tipp-Guthaben ändern — modusübergreifend und dauerhaft, wie die übrige
+   * Statistik. `verbrauche` bucht sofort ab, `verdiene` schreibt gut, sobald
+   * eine laufende Partie 100 Züge erreicht oder ihren eigenen Bestwert
+   * überbietet (siehe GameScreen).
+   */
+  const verbraucheTipp = useCallback(() => {
+    const neu = spendHint(statsRef.current);
+    statsRef.current = neu;
+    setStats(neu);
+    saveStats(neu);
+  }, []);
+
+  const verdieneTipp = useCallback(() => {
+    const neu = earnHint(statsRef.current);
+    if (neu === statsRef.current) return;
+    statsRef.current = neu;
+    setStats(neu);
+    saveStats(neu);
+  }, []);
+
+  /**
    * Spielende: sofort verbuchen, erst später zeigen. Wer während der letzten
    * Animation die Partie verlässt, verliert so weder Ergebnis noch Bestwert —
    * und das Tagesrätsel ist verbucht, bevor irgendetwas schiefgehen kann.
@@ -300,6 +323,10 @@ export default function App() {
               dark={dunkel}
               settings={settings}
               initialGame={screen.fortsetzen ?? null}
+              hints={stats.hints}
+              bestScore={stats.bestScore[screen.mode] ?? 0}
+              onSpendHint={verbraucheTipp}
+              onEarnHint={verdieneTipp}
               onExit={zumMenue}
               onGameOver={spielVorbei}
               onShowResult={zeigeErgebnis}

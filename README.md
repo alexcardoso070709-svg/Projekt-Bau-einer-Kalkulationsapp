@@ -35,7 +35,9 @@ Kein einziges Wort davon steht im Spiel. Farbe und Form erklären alles.
 | **Tagesrätsel** | 90 Züge, weltweit dieselbe Steinfolge. Einmal am Tag, Ergebnis teilbar. |
 | **Endlos** | Bis nichts mehr geht. Für die Bestenjagd. |
 | **Tempo** | 60 Sekunden gegen die Uhr. Jedes Kettenglied ab dem zweiten schenkt 1 s, jedes Prisma 5 s. Die Uhr steht, sobald man die Partie verlässt. |
-| **Zen** | Kein Spielende, unbegrenzt Züge zurücknehmen, Tipp-Knopf. |
+
+Jeder Modus hat denselben Tipp-Knopf: höchstens drei Tipps auf einmal, geteilt über alle Modi und dauerhaft gespeichert. Verbraucht ist verbraucht — außer alle 100 Züge einer laufenden Partie oder in dem Moment, in dem der eigene Bestwert eines Modus fällt, gibt es einen Tipp zurück (bis zum Höchststand von drei).
+| **Zen** | Kein Spielende, unbegrenzt Züge zurücknehmen. |
 
 ---
 

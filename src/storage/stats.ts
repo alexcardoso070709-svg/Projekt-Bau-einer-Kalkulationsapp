@@ -33,7 +33,22 @@ export interface Stats {
   lastDailyPuzzle: number | null;
   /** Tagesergebnisse, Schlüssel ist die Rätselnummer. */
   daily: Record<string, DailyResult>;
+  /** Verbleibende Tipps, modusübergreifend. Höchstens HINTS_MAX. */
+  hints: number;
 }
+
+/**
+ * Höchstzahl gleichzeitig vorrätiger Tipps.
+ *
+ * Ein unbegrenzter Tipp-Knopf nimmt jedem Zug seine Spannung — man tippt
+ * einfach, bis es passt. Drei sind knapp genug, dass ein Tipp eine
+ * Entscheidung bleibt, aber nie so knapp, dass ein einziger falscher
+ * Fingertipp die letzte Reserve verbrennt.
+ */
+export const HINTS_MAX = 3;
+
+/** Nach so vielen Zügen in einer laufenden Partie gibt es einen Tipp zurück. */
+export const HINT_MOVES_MILESTONE = 100;
 
 export type ThemeChoice = 'auto' | 'dark' | 'light';
 
@@ -57,6 +72,7 @@ export const DEFAULT_STATS: Stats = {
   longestStreak: 0,
   lastDailyPuzzle: null,
   daily: {},
+  hints: HINTS_MAX,
 };
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -92,7 +108,24 @@ export function normalizeStats(raw: Partial<Stats> & { lastDailyKey?: string | n
     bestScore: { ...DEFAULT_STATS.bestScore, ...(raw.bestScore ?? {}) },
     lastDailyPuzzle: last,
     daily,
+    hints: clampHints(raw.hints ?? DEFAULT_STATS.hints),
   };
+}
+
+function clampHints(n: number): number {
+  return Math.max(0, Math.min(HINTS_MAX, Math.round(n)));
+}
+
+/** Verbraucht einen Tipp. Ohne Vorrat unverändert — nie ins Negative. */
+export function spendHint(stats: Stats): Stats {
+  if (stats.hints <= 0) return stats;
+  return { ...stats, hints: stats.hints - 1 };
+}
+
+/** Schreibt einen Tipp gut, gedeckelt bei HINTS_MAX. */
+export function earnHint(stats: Stats): Stats {
+  if (stats.hints >= HINTS_MAX) return stats;
+  return { ...stats, hints: stats.hints + 1 };
 }
 
 /**

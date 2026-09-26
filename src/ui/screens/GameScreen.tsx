@@ -28,7 +28,7 @@ import { createGame, playMove, suggestColumn, tickClock, timeLeftMs } from '../.
 import { TutorialStep, tutorialGame } from '../../game/tutorial';
 import { COLS, GameState, Level, Mode, Position, ROWS } from '../../game/types';
 import { strings } from '../../i18n/strings';
-import { Settings } from '../../storage/stats';
+import { HINT_MOVES_MILESTONE, Settings } from '../../storage/stats';
 import * as feedback from '../feedback';
 import { FONT, Palette, RADIUS, SPACING, STONES, TABULAR, TIMING } from '../theme';
 import { Backdrop } from '../components/Backdrop';
@@ -66,6 +66,14 @@ export interface GameScreenProps {
   initialGame?: GameState | null;
   /** Geskriptete Schritte statt freiem Spiel. */
   tutorial?: TutorialScript | null;
+  /** Verbleibende Tipps, modusübergreifend und dauerhaft — siehe App.tsx. */
+  hints?: number;
+  /** Bisheriger Bestwert dieses Modus, für den Tipp-Bonus bei neuem Rekord. */
+  bestScore?: number;
+  /** Bucht sofort einen Tipp ab. */
+  onSpendHint?: () => void;
+  /** Schreibt einen Tipp gut (gedeckelt beim Aufrufer). */
+  onEarnHint?: () => void;
   onExit: () => void;
   /** Sichert den Stand — sofort beim Zug, nicht erst nach der Animation. */
   onPersist: (game: GameState) => void;
@@ -82,6 +90,10 @@ export function GameScreen({
   settings,
   initialGame,
   tutorial = null,
+  hints = 0,
+  bestScore = 0,
+  onSpendHint,
+  onEarnHint,
   onExit,
   onPersist,
   onGameOver,
@@ -280,6 +292,14 @@ export function GameScreen({
         if (next.over) onGameOver(next);
         else onPersist(next);
       }
+      // Tipp-Bonus: alle 100 Züge, oder in dem einen Moment, in dem der
+      // Punktestand den bisherigen Bestwert dieses Modus überholt. Der
+      // Punktestand steigt in dieser Partie nur, deshalb genügt der einfache
+      // Vergleich vor/nach dem Zug — die Grenze kann höchstens einmal fallen.
+      if (!tutorial) {
+        if (next.moves % HINT_MOVES_MILESTONE === 0) onEarnHint?.();
+        else if (g.score <= bestScore && next.score > bestScore) onEarnHint?.();
+      }
       if (result.timeBonusMs > 0) {
         const b = ++nonce.current;
         setZeitBonus({ ms: result.timeBonusMs, nonce: b });
@@ -373,7 +393,7 @@ export function GameScreen({
     },
     // warte liest nur Refs und muss nicht in die Abhängigkeiten.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [tutorial, mode, abweisen, erschuettern, zeigeKette, naechsterSchritt, onGameOver, onPersist],
+    [tutorial, mode, abweisen, erschuettern, zeigeKette, naechsterSchritt, onGameOver, onPersist, bestScore, onEarnHint],
   );
 
   const spieleZug = useCallback(
@@ -475,13 +495,14 @@ export function GameScreen({
   }, [onPersist]);
 
   const handleHint = useCallback(() => {
-    if (busyRef.current || gameRef.current.over) return;
+    if (busyRef.current || gameRef.current.over || hints <= 0) return;
     const col = suggestColumn(gameRef.current);
     if (col === null) return;
     feedback.button();
+    onSpendHint?.();
     setZenHint(col);
     setTimeout(() => alive.current && setZenHint(null), 1800);
-  }, []);
+  }, [hints, onSpendHint]);
 
   /* ── Darstellung ─────────────────────────────────────────────── */
 
@@ -661,16 +682,24 @@ export function GameScreen({
 
         {/* Fußzeile */}
         <View style={[styles.footer, { paddingBottom: insets.bottom + SPACING.md }]}>
-          {tutorial ? null : mode === 'zen' ? (
+          {tutorial ? null : (
             <>
-              <FooterButton icon="undo" label={strings.undo} palette={palette} disabled={rueckgaengig === 0 || busy} onPress={handleUndo} />
-              <FooterButton icon="hint" label={strings.hint} palette={palette} disabled={busy} onPress={handleHint} />
+              {mode === 'zen' ? (
+                <FooterButton icon="undo" label={strings.undo} palette={palette} disabled={rueckgaengig === 0 || busy} onPress={handleUndo} />
+              ) : (
+                <View style={styles.chips}>
+                  <Chip icon="chain" value={`×${game.bestChain}`} palette={palette} label={strings.bestChain} />
+                  <Chip icon="prisma" value={`${game.prismas}`} palette={palette} label={strings.prismas} />
+                </View>
+              )}
+              <FooterButton
+                icon="hint"
+                label={`${strings.hint} · ${hints}`}
+                palette={palette}
+                disabled={busy || hints <= 0}
+                onPress={handleHint}
+              />
             </>
-          ) : (
-            <View style={styles.chips}>
-              <Chip icon="chain" value={`×${game.bestChain}`} palette={palette} label={strings.bestChain} />
-              <Chip icon="prisma" value={`${game.prismas}`} palette={palette} label={strings.prismas} />
-            </View>
           )}
         </View>
       </Animated.View>

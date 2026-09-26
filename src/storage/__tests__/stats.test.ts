@@ -3,12 +3,15 @@ import { puzzleNumber } from '../../game/daily';
 import { GameState } from '../../game/types';
 import {
   DEFAULT_STATS,
+  HINTS_MAX,
   archivedDailyGame,
   currentStreak,
   dailyDone,
+  earnHint,
   isTodaysDaily,
   normalizeStats,
   recordGame,
+  spendHint,
 } from '../stats';
 
 const tag = (d: number, m = 8) => new Date(2026, m, d, 12);
@@ -146,5 +149,34 @@ describe('Freie Partien', () => {
     let s = recordGame(DEFAULT_STATS, e);
     s = recordGame(s, e);
     expect(s.played).toBe(2);
+  });
+});
+
+describe('Tipp-Guthaben', () => {
+  it('startet mit dem vollen Vorrat', () => {
+    expect(DEFAULT_STATS.hints).toBe(HINTS_MAX);
+  });
+
+  it('verbraucht einen Tipp, aber nie ins Negative', () => {
+    let s = { ...DEFAULT_STATS, hints: 1 };
+    s = spendHint(s);
+    expect(s.hints).toBe(0);
+    s = spendHint(s);
+    expect(s.hints).toBe(0);
+  });
+
+  it('schreibt einen Tipp gut, aber nie über den Höchststand hinaus', () => {
+    let s = { ...DEFAULT_STATS, hints: HINTS_MAX - 1 };
+    s = earnHint(s);
+    expect(s.hints).toBe(HINTS_MAX);
+    s = earnHint(s);
+    expect(s.hints).toBe(HINTS_MAX);
+  });
+
+  it('normalisiert einen fehlenden oder unsinnigen Wert auf den gültigen Bereich', () => {
+    expect(normalizeStats({}).hints).toBe(HINTS_MAX);
+    expect(normalizeStats({ hints: -5 } as never).hints).toBe(0);
+    expect(normalizeStats({ hints: 99 } as never).hints).toBe(HINTS_MAX);
+    expect(normalizeStats({ hints: 2 } as never).hints).toBe(2);
   });
 });
